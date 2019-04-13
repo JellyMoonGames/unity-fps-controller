@@ -27,29 +27,29 @@ public class MovementController : MonoBehaviour
     [SerializeField] private float horizontalCrouchSpeed = 5f;
 
     [Header("Walk Speed")]
-	[SerializeField] private float forwardWalkSpeed = 5f;
+    [SerializeField] private float forwardWalkSpeed = 5f;
     [SerializeField] private float backwardWalkSpeed = 5f;
     [SerializeField] private float horizontalWalkSpeed = 5f;
 
-	[Header("Sprint Speed")]
+    [Header("Sprint Speed")]
     [SerializeField] private float forwardSprintSpeed = 5f;
 
-	[Header("Movement Settings")]
+    [Header("Movement Settings")]
     [SerializeField] private float movementSpeedSmoothAmount = 0.15f;
     [SerializeField] private float groundSmoothAmount = 0.15f;
     [SerializeField] private float airSmoothAmount = 0.5f;
 
-	[Header("Jump Settings")]
+    [Header("Jump Settings")]
     [SerializeField] private float jumpSpeed = 5f;
     [SerializeField] private float gravity = 9.81f;
     [SerializeField] private int maxAmountOfJumps = 1;
     [SerializeField] private bool canJumpInMidAir = false;
 
-	[Header("Crouch Settings")]
+    [Header("Crouch Settings")]
     [SerializeField] private float crouchHeight = 1.1f;
     [SerializeField] private float crouchSpeed = 15f;
 
-	[Header("Physics Interaction")]
+    [Header("Physics Interaction")]
     [SerializeField] private float crouchPushPower = 2f;
     [SerializeField] private float normalPushPower = 2f;
     [SerializeField] private float sprintPushPower = 2f;
@@ -57,34 +57,34 @@ public class MovementController : MonoBehaviour
     [Header("References")]
     [SerializeField] private Transform crouchObject;
 
-	[Header("Toggle Settings")]
+    [Header("Toggle Settings")]
     [SerializeField] private bool canMove = true;
     [SerializeField] private bool canJump = true;
     [SerializeField] private bool canSprint = true;
     [SerializeField] private bool canCrouch = true;
 
-	#endregion
+    #endregion
 
-	#region Private Variables
+    #region Private Variables
 
-	//Input variables
+    //Input variables
     private float horizontalInputRaw = 0f;
-	private float horizontalInputVelocity = 0f;
-	private float verticalInputRaw = 0f;
-	private float verticalInputVelocity = 0f;
+    private float horizontalInputVelocity = 0f;
+    private float verticalInputRaw = 0f;
+    private float verticalInputVelocity = 0f;
     private Vector3 inputVector = Vector3.zero;
     private Vector3 movementVector = Vector3.zero;
 
     //Jump Variables
     private float verticalVelocity = 0f;
-	private int currentAmountOfJumps = 0;
-	private float inputSmoothAmount = 0f;
-	private float waitToLandTrack = 0f;
+    private int currentAmountOfJumps = 0;
+    private float inputSmoothAmount = 0f;
+    private float waitToLandTrack = 0f;
     private float jumpAllowTime = 0.2f;
     private float jumpInputDelayTime = 0.21f; // Must be greater than or equal to 'jumpAllowTime'
     private float jumpInputTrack = 0f;
 
-	//Crouch Variables
+    //Crouch Variables
     private float initialHeight = 0f;
     private Vector3 initialCenter = Vector3.zero;
     private float initialCrouchObjectHeight = 0f;
@@ -108,25 +108,25 @@ public class MovementController : MonoBehaviour
     }
 
     private void Start()
-	{
-		#region Initialising Variables
+    {
+        #region Initialising Variables
 
-		JumpAllowTimeTrack = jumpAllowTime;
-		inputSmoothAmount = groundSmoothAmount;
-		currentAmountOfJumps = 0;
+        JumpAllowTimeTrack = jumpAllowTime;
+        inputSmoothAmount = groundSmoothAmount;
+        currentAmountOfJumps = 0;
 
-	    initialCrouchObjectHeight = crouchObject.localPosition.y;
-	    initialHeight = CC.height;
-	    initialCenter = CC.center;
+        initialCrouchObjectHeight = crouchObject.localPosition.y;
+        initialHeight = CC.height;
+        initialCenter = CC.center;
 
-	    IsCrouching = false;
-		IsSprinting = false;
-		IsObjectAboveHead = false;
+        IsCrouching = false;
+        IsSprinting = false;
+        IsObjectAboveHead = false;
 
-		#endregion
-	}
+        #endregion
+    }
 
-	private void Update()
+    private void Update()
     {
         HandleInput();
         Jumping();

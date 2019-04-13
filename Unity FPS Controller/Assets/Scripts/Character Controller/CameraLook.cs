@@ -8,16 +8,16 @@ public class CameraLook : MonoBehaviour
     public bool IsLeaning { get; private set; }
 
     #endregion
-    
-	#region Inspector Variables
 
-	[Header("Camera Look Settings")]
-	[SerializeField] private float lookSensitivity = 3f;
+    #region Inspector Variables
+
+    [Header("Camera Look Settings")]
+    [SerializeField] private float lookSensitivity = 3f;
     [SerializeField] private float smoothAmount = 0f;
     [SerializeField] private float upDownRange = 85f;
 
-	[Header("Lean Settings")]
-	[SerializeField] private float leanSpeed = 10f;
+    [Header("Lean Settings")]
+    [SerializeField] private float leanSpeed = 10f;
     [SerializeField] private float leanMovementAmount = 1;
     [SerializeField] private float leanRotationAmount = 20f;
 
@@ -45,8 +45,8 @@ public class CameraLook : MonoBehaviour
     [SerializeField] private Transform leanObject;
     [SerializeField] private Transform headbobObject;
 
-	[Header("Toggle Settings")]
-	[SerializeField] private bool canLean = true;
+    [Header("Toggle Settings")]
+    [SerializeField] private bool canLean = true;
     [SerializeField] private bool canHeadbob = true;
 
     #endregion
@@ -55,12 +55,12 @@ public class CameraLook : MonoBehaviour
 
     //Camera Look
     private float xAxisRaw = 0f;
-	private float xAxisVelocity = 0f;
-	private float xAxis = 0f;
-	private float yAxisRaw = 0f;
-	private float yAxisVelocity = 0f;
-	private float yAxis = 0f;
-	private float verticalRotation = 0f;
+    private float xAxisVelocity = 0f;
+    private float xAxis = 0f;
+    private float yAxisRaw = 0f;
+    private float yAxisVelocity = 0f;
+    private float yAxis = 0f;
+    private float verticalRotation = 0f;
 
     //Leaning
     private Vector3 initialPosition = Vector3.zero;
@@ -96,21 +96,21 @@ public class CameraLook : MonoBehaviour
     }
 
     private void Start()
-	{
-	    #region Initialise Variables
-	    
-	    initialPosition = leanObject.localPosition;
-	    targetPosition = Vector3.zero;
-	    initialRotation = leanObject.localRotation;
-		targetRotation = Quaternion.identity;
-		IsLeaning = false;
+    {
+        #region Initialise Variables
+        
+        initialPosition = leanObject.localPosition;
+        targetPosition = Vector3.zero;
+        initialRotation = leanObject.localRotation;
+        targetRotation = Quaternion.identity;
+        IsLeaning = false;
 
         headbobRestPosition = headbobObject.localPosition;
         headbobObjectPosition = headbobObject.localPosition;
-	    isCycleFinished = false;
-	    
-	    #endregion
-	}
+        isCycleFinished = false;
+        
+        #endregion
+    }
 
     private void Update()
     {
