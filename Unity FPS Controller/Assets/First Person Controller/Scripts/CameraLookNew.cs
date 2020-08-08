@@ -56,7 +56,6 @@ public class CameraLookNew : MonoBehaviour
 
     //Camera Look
     private Vector2 rawInputVector = Vector2.zero;
-
     private float xAxisVelocity = 0f;
     private float xAxis = 0f;
     private float yAxisVelocity = 0f;
@@ -254,13 +253,13 @@ public class CameraLookNew : MonoBehaviour
         xAxis = Mathf.SmoothDamp(xAxis, rawInputVector.x, ref xAxisVelocity, smoothAmount);
         yAxis = Mathf.SmoothDamp(yAxis, rawInputVector.y, ref yAxisVelocity, smoothAmount);
         
-        verticalRotation -= yAxis * (lookSensitivity*0.1f*0.222f);
+        verticalRotation -= (yAxis * 0.1f * 0.222f) * lookSensitivity;
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
     }
 
     private void ApplyMovement()
     {
-        playerObject.Rotate(0f, xAxis * (lookSensitivity*0.1f*0.222f), 0f);
+        playerObject.Rotate(0f, (xAxis * 0.1f * 0.222f) * lookSensitivity, 0f);
         transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
 
         if(canLean)

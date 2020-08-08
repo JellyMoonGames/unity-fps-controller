@@ -1,4 +1,4 @@
-// GENERATED AUTOMATICALLY FROM 'Assets/Settings/Input/PlayerControls.inputactions'
+// GENERATED AUTOMATICALLY FROM 'Assets/First Person Controller/Settings/Input/PlayerControls.inputactions'
 
 using System;
 using System.Collections;
@@ -336,6 +336,17 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Keyboard and Mouse"",
+                    ""action"": ""Look"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""55857cf7-8afa-4892-92db-774c78e5c9b3"",
+                    ""path"": ""<Gamepad>/rightStick"",
+                    ""interactions"": """",
+                    ""processors"": ""ScaleVector2(x=25,y=25)"",
+                    ""groups"": ""Gamepad"",
                     ""action"": ""Look"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
