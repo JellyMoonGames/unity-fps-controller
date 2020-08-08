@@ -27,37 +27,37 @@ public class MovementControllerNew : MonoBehaviour
     #region Inspector Variables
     
     [Header("Crouch Speed")]
-    [SerializeField] private float forwardCrouchSpeed = 5f;
-    [SerializeField] private float backwardCrouchSpeed = 5f;
-    [SerializeField] private float horizontalCrouchSpeed = 5f;
+    [SerializeField] private float forwardCrouchSpeed = 2f;
+    [SerializeField] private float backwardCrouchSpeed = 2f;
+    [SerializeField] private float horizontalCrouchSpeed = 2f;
 
     [Header("Walk Speed")]
-    [SerializeField] private float forwardWalkSpeed = 5f;
-    [SerializeField] private float backwardWalkSpeed = 5f;
-    [SerializeField] private float horizontalWalkSpeed = 5f;
+    [SerializeField] private float forwardWalkSpeed = 4f;
+    [SerializeField] private float backwardWalkSpeed = 4f;
+    [SerializeField] private float horizontalWalkSpeed = 4f;
 
     [Header("Sprint Speed")]
-    [SerializeField] private float forwardSprintSpeed = 5f;
+    [SerializeField] private float forwardSprintSpeed = 6f;
 
     [Header("Movement Settings")]
-    [SerializeField] private float movementSpeedSmoothAmount = 20f;
-    [SerializeField] private float groundSmoothAmount = 0.15f;
+    [SerializeField] private float movementTransitionSpeed = 3f;
+    [SerializeField] private float groundSmoothAmount = 0.1f;
     [SerializeField] private float airSmoothAmount = 0.5f;
 
     [Header("Jump Settings")]
-    [SerializeField] private float jumpSpeed = 5f;
-    [SerializeField] private float gravity = 9.81f;
+    [SerializeField] private float jumpSpeed = 15f;
+    [SerializeField] private float gravity = 18f;
     [SerializeField] private int maxAmountOfJumps = 1;
     [SerializeField] private bool canAirJump = false;
 
     [Header("Crouch Settings")]
-    [SerializeField] private float crouchHeight = 1.1f;
+    [SerializeField] private float crouchHeight = 0.85f;
     [SerializeField] private float crouchSpeed = 15f;
 
     [Header("Physics Interaction")]
-    [SerializeField] private float crouchPushPower = 2f;
+    [SerializeField] private float crouchPushPower = 1f;
     [SerializeField] private float normalPushPower = 2f;
-    [SerializeField] private float sprintPushPower = 2f;
+    [SerializeField] private float sprintPushPower = 3f;
     
     [Header("References")]
     [SerializeField] private Transform crouchObject;
@@ -318,8 +318,8 @@ public class MovementControllerNew : MonoBehaviour
             targetVerticalSpeed = forwardSprintSpeed;
         }
 
-        HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, targetHorizontalSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-        VerticalSpeed = Mathf.Lerp(VerticalSpeed, targetVerticalSpeed, movementSpeedSmoothAmount * Time.deltaTime);
+        HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, targetHorizontalSpeed, movementTransitionSpeed * Time.deltaTime);
+        VerticalSpeed = Mathf.Lerp(VerticalSpeed, targetVerticalSpeed, movementTransitionSpeed * Time.deltaTime);
         
         movementVector = new Vector3(HorizontalInput * HorizontalSpeed, verticalVelocity, VerticalInput * VerticalSpeed);
         movementVector = transform.rotation * movementVector;
@@ -333,13 +333,15 @@ public class MovementControllerNew : MonoBehaviour
         if(hitRigidbody == null || hitRigidbody.isKinematic || hit.moveDirection.y < -0.3f) return;
 
         float finalPushPower;
+        float speedContributionRatio;
 
-        if(IsCrouching)         finalPushPower = crouchPushPower;
-        else if(IsSprinting)    finalPushPower = sprintPushPower;
-        else                    finalPushPower = normalPushPower;
+        if(IsCrouching)         { finalPushPower = crouchPushPower; speedContributionRatio = 0.1f; }
+        else if(IsSprinting)    { finalPushPower = sprintPushPower; speedContributionRatio = 0.8f; }
+        else                    { finalPushPower = normalPushPower; speedContributionRatio = 0.3f; }
 
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
-        hitRigidbody.velocity = pushDirection * (finalPushPower * Mathf.Clamp(Mathf.Abs(HorizontalInput) + Mathf.Abs(VerticalInput), 0, 1));
+        float pushVelocity = finalPushPower * Mathf.Clamp(Mathf.Abs(HorizontalInput) + Mathf.Abs(VerticalInput), 0, 1) + ((CC.velocity.x + CC.velocity.y + CC.velocity.z) / 3f) * speedContributionRatio;
+        hitRigidbody.velocity = pushDirection * pushVelocity;
         if(OnHitPhysicsObject != null) OnHitPhysicsObject();
 
         #endregion
