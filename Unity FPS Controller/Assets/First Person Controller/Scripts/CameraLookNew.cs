@@ -140,7 +140,7 @@ public class CameraLookNew : MonoBehaviour
             xBobAmount = normalXBobAmount;
             yBobAmount = normalYBobAmount;
 
-            if(movementController.IsCrouching)
+            if(movementController.CurrentState == State.Crouching)
             {
                 bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
                 * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
@@ -149,7 +149,7 @@ public class CameraLookNew : MonoBehaviour
                 yBobAmount = crouchYBobAmount;
             }
 
-            if(movementController.IsObjectAboveHead)
+            if(movementController.ObjectIsAboveHead)
             {
                 bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
                 * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
@@ -162,7 +162,7 @@ public class CameraLookNew : MonoBehaviour
                     yBobAmount = 0.05f;
             }
 
-            if(movementController.IsSprinting)
+            if(movementController.CurrentState == State.Sprinting)
             {
                 bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * sprintHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
                 * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
@@ -215,7 +215,7 @@ public class CameraLookNew : MonoBehaviour
     {
         if(!canLean) return;
         
-        if(movementController.JumpAllowTimeTrack >= 0.1f && movementController.IsSprinting == false)
+        if(movementController.IsGrounded && movementController.CurrentState != State.Sprinting)
         {
             if(controls.Movement.LeanLeft.ReadValue<float>() > 0)
             {

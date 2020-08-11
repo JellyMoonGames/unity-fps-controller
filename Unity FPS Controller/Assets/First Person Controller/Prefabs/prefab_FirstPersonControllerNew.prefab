@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 4209838464582313751}
   - component: {fileID: 8086589682845593013}
   - component: {fileID: 4174140287883568858}
-  - component: {fileID: 6377341015848725350}
   - component: {fileID: 5332724029931467946}
   m_Layer: 0
   m_Name: Camera
@@ -60,7 +59,7 @@ Camera:
     height: 1
   near clip plane: 0.01
   far clip plane: 1000
-  field of view: 70
+  field of view: 85
   orthographic: 0
   orthographic size: 5
   m_Depth: 0
@@ -68,7 +67,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: b6384887457d64a43a0703acb17a05e6, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -117,40 +116,6 @@ MonoBehaviour:
   m_RequiresDepthTexture: 0
   m_RequiresColorTexture: 0
   m_Version: 2
---- !u!114 &6377341015848725350
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 567467048299060112}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94148256337d05b47b9cdfd639928582, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lookSensitivity: 1.25
-  smoothAmount: 0
-  upDownRange: 85
-  leanSpeed: 10
-  leanMovementAmount: 0.38
-  leanRotationAmount: 15
-  generalHeadbobSpeedMultiplier: 1
-  crouchHeadbobSpeedMultiplier: 2
-  normalHeadbobSpeedMultiplier: 1.4
-  sprintHeadbobSpeedMultiplier: 1.8
-  transitionSpeed: 20
-  crouchXBobAmount: 0.1
-  crouchYBobAmount: 0.2
-  normalXBobAmount: 0.25
-  normalYBobAmount: 0.3
-  sprintXBobAmount: 0.3
-  sprintYBobAmount: 0.35
-  playerObject: {fileID: 5332724029619753496}
-  leanObject: {fileID: 5332724029619758532}
-  headbobObject: {fileID: 5332724029619734964}
-  canLean: 1
-  canHeadbob: 1
 --- !u!114 &5332724029931467946
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,13 +194,13 @@ CharacterController:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Height: 2
+  m_Height: 1.8
   m_Radius: 0.5
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.04
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 1.01, z: 0}
+  m_Center: {x: 0, y: 0.91, z: 0}
 --- !u!114 &5332724029053497746
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,15 +219,15 @@ MonoBehaviour:
   forwardWalkSpeed: 3.5
   backwardWalkSpeed: 3.5
   horizontalWalkSpeed: 3.5
-  forwardSprintSpeed: 6
-  movementSpeedSmoothAmount: 20
+  forwardSprintSpeed: 15
+  movementTransitionSpeed: 5
   groundSmoothAmount: 0.1
-  airSmoothAmount: 0.5
+  airSmoothAmount: 0.1
   jumpSpeed: 7
   gravity: 18
   maxAmountOfJumps: 1
   canAirJump: 0
-  crouchHeight: 1.1
+  crouchHeight: 0.85
   crouchSpeed: 15
   crouchPushPower: 1
   normalPushPower: 2
@@ -282,7 +247,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5332724029619758532}
   m_Layer: 0
-  m_Name: LeanObject
+  m_Name: Lean Object
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -313,7 +278,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5332724029619734964}
   m_Layer: 0
-  m_Name: HeadbobObject
+  m_Name: Headbob Object
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -358,7 +323,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5333650307199098766}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.75, z: 0}
+  m_LocalPosition: {x: 0, y: 1.8, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 5332724029619758532}

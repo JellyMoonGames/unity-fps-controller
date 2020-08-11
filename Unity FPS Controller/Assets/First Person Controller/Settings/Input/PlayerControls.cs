@@ -40,7 +40,7 @@ public class @PlayerControls : IInputActionCollection, IDisposable
                     ""id"": ""4666eb6c-7fb4-46cd-b150-b46c3b7c985f"",
                     ""expectedControlType"": ""Button"",
                     ""processors"": """",
-                    ""interactions"": ""Press""
+                    ""interactions"": """"
                 },
                 {
                     ""name"": ""Lean Left"",

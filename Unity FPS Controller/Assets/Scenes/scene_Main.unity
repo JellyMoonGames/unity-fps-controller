@@ -2372,65 +2372,25 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 4174140287883568858, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_Cameras.Array.size
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4174140287883568858, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_Antialiasing
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4174140287883568858, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_RenderPostProcessing
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4174140287883568858, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_Cameras.Array.data[0]
-      value: 
-      objectReference: {fileID: 0}
-    - target: {fileID: 4209838464582313751, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_AllowDynamicResolution
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4209838464582313751, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: field of view
-      value: 85
-      objectReference: {fileID: 0}
-    - target: {fileID: 4209838464582313751, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_TargetTexture
-      value: 
-      objectReference: {fileID: 8400000, guid: b6384887457d64a43a0703acb17a05e6, type: 2}
     - target: {fileID: 5332724029053497746, guid: 61556c1308039df4dac5f7de89e9f57a,
         type: 3}
-      propertyPath: movementSpeedSmoothAmount
-      value: 3
+      propertyPath: crouchHeight
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 5332724029053497746, guid: 61556c1308039df4dac5f7de89e9f57a,
+        type: 3}
+      propertyPath: airSmoothAmount
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5332724029053497746, guid: 61556c1308039df4dac5f7de89e9f57a,
         type: 3}
       propertyPath: forwardSprintSpeed
-      value: 7
+      value: 6
       objectReference: {fileID: 0}
     - target: {fileID: 5332724029619515140, guid: 61556c1308039df4dac5f7de89e9f57a,
         type: 3}
       propertyPath: m_Name
       value: prefab_FirstPersonControllerNew
-      objectReference: {fileID: 0}
-    - target: {fileID: 5332724029619535600, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_Name
-      value: Lean Object
-      objectReference: {fileID: 0}
-    - target: {fileID: 5332724029619591564, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: m_Name
-      value: Headbob Object
       objectReference: {fileID: 0}
     - target: {fileID: 5332724029619753496, guid: 61556c1308039df4dac5f7de89e9f57a,
         type: 3}
@@ -2487,11 +2447,5 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5332724029931467946, guid: 61556c1308039df4dac5f7de89e9f57a,
-        type: 3}
-      propertyPath: lookSensitivity
-      value: 1.5
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 6377341015848725350, guid: 61556c1308039df4dac5f7de89e9f57a, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 61556c1308039df4dac5f7de89e9f57a, type: 3}
