@@ -16,6 +16,7 @@ public class MovementControllerNew : MonoBehaviour
     public float HorizontalInput    { get; private set; }
     public float VerticalInput      { get; private set; }
     public float JumpAllowTimeTrack { get; private set; }
+    public float JumpInputTrack     { get; private set; }
 
     public bool ObjectIsAboveHead   { get; private set; }
     public bool IsGrounded          { get { return JumpAllowTimeTrack >= 0f; } }
@@ -90,7 +91,6 @@ public class MovementControllerNew : MonoBehaviour
     private float waitToLandTrack = 0f;
     private float jumpAllowTime = 0.2f;
     private float jumpInputDelayTime = 0.21f; // Must be greater than or equal to 'jumpAllowTime'
-    private float jumpInputTrack = 0f;
     private bool initiateJump = false;
 
     // Crouch Variables
@@ -165,8 +165,6 @@ public class MovementControllerNew : MonoBehaviour
         UpdateCrouchSystem();
         UpdateMovementSpeed();
 
-        Debug.Log(ObjectIsAboveHead);
-
         // Apply The Movement to the 'CharacterController'.
         CC.Move(movementVector * Time.deltaTime);
     }
@@ -189,7 +187,7 @@ public class MovementControllerNew : MonoBehaviour
             return;
         }
 
-        if(maxAmountOfJumps > 0 && jumpInputTrack <= 0f)
+        if(maxAmountOfJumps > 0 && JumpInputTrack <= 0f)
         {
             if(IsGrounded || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
             {
@@ -202,7 +200,7 @@ public class MovementControllerNew : MonoBehaviour
     {
         if(canCrouch == false || ObjectIsAboveHead) return;
 
-        if(CurrentState != State.Sprinting && IsGrounded && jumpInputTrack <= 0f)
+        if(CurrentState != State.Sprinting && IsGrounded && JumpInputTrack <= 0f)
         {
             SetState((CurrentState == State.Crouching) ? State.Standing : State.Crouching);
             if(OnCrouch != null) OnCrouch();
@@ -224,7 +222,7 @@ public class MovementControllerNew : MonoBehaviour
             return;
         }
 
-        if(IsMoving && IsGrounded && SprintingIsValid && jumpInputTrack <= 0f)
+        if(IsMoving && IsGrounded && SprintingIsValid && JumpInputTrack <= 0f)
         {
             initiateSprint = true;
         }
@@ -238,7 +236,7 @@ public class MovementControllerNew : MonoBehaviour
             JumpAllowTimeTrack = jumpAllowTime;
             waitToLandTrack -= Time.deltaTime;
             currentAmountOfJumps = 0;
-            jumpInputTrack = 0;
+            JumpInputTrack = 0;
         }
         else
         {
@@ -248,7 +246,7 @@ public class MovementControllerNew : MonoBehaviour
             verticalVelocity -= gravity * Time.deltaTime;
         }
 
-        jumpInputTrack -= Time.deltaTime;
+        JumpInputTrack -= Time.deltaTime;
         
         if(waitToLandTrack <= 0f) verticalVelocity = 0f;
         if(maxAmountOfJumps <= 0) maxAmountOfJumps = 0;
@@ -256,7 +254,7 @@ public class MovementControllerNew : MonoBehaviour
         if(initiateJump)
         {
             verticalVelocity = jumpSpeed;
-            jumpInputTrack = jumpInputDelayTime;
+            JumpInputTrack = jumpInputDelayTime;
             currentAmountOfJumps++;
             if(OnJump != null) OnJump();
 
@@ -279,7 +277,7 @@ public class MovementControllerNew : MonoBehaviour
     private void UpdateSprintSystem()
     {
         // Continous sprint check.
-        if(IsMoving && IsGrounded && TryingToSprint && SprintingIsValid && !ObjectIsAboveHead && jumpInputTrack <= 0f)
+        if(IsMoving && IsGrounded && TryingToSprint && SprintingIsValid && !ObjectIsAboveHead && JumpInputTrack <= 0f)
         {
             initiateSprint = true;
         }

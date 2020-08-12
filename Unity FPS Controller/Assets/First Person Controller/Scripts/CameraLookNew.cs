@@ -215,7 +215,7 @@ public class CameraLookNew : MonoBehaviour
     {
         if(!canLean) return;
         
-        if(movementController.IsGrounded && movementController.CurrentState != State.Sprinting)
+        if(movementController.IsGrounded && movementController.CurrentState != State.Sprinting && movementController.JumpInputTrack <= 0f)
         {
             if(controls.Movement.LeanLeft.ReadValue<float>() > 0)
             {
