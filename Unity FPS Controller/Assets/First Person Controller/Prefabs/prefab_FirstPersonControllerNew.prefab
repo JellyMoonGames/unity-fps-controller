@@ -67,7 +67,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 8400000, guid: b6384887457d64a43a0703acb17a05e6, type: 2}
+  m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -194,13 +194,13 @@ CharacterController:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Height: 1.8
+  m_Height: 2
   m_Radius: 0.5
   m_SlopeLimit: 45
   m_StepOffset: 0.3
   m_SkinWidth: 0.04
   m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.91, z: 0}
+  m_Center: {x: 0, y: 1.01, z: 0}
 --- !u!114 &5332724029053497746
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,24 +219,27 @@ MonoBehaviour:
   forwardWalkSpeed: 3.5
   backwardWalkSpeed: 3.5
   horizontalWalkSpeed: 3.5
-  forwardSprintSpeed: 15
+  forwardSprintSpeed: 6
   movementTransitionSpeed: 5
   groundSmoothAmount: 0.1
-  airSmoothAmount: 0.1
+  airSmoothAmount: 0.5
   jumpSpeed: 7
   gravity: 18
   maxAmountOfJumps: 1
   canAirJump: 0
-  crouchHeight: 0.85
-  crouchSpeed: 15
+  crouchHeight: 1.1
+  crouchSpeed: 20
+  slideDuration: 1.5
   crouchPushPower: 1
   normalPushPower: 2
   sprintPushPower: 3
+  slidePushPower: 4
   crouchObject: {fileID: 5337053327074440768}
   canMove: 1
   canJump: 1
   canSprint: 1
   canCrouch: 1
+  canSlide: 1
 --- !u!1 &5332724029619535600
 GameObject:
   m_ObjectHideFlags: 0
@@ -323,7 +326,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5333650307199098766}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.8, z: 0}
+  m_LocalPosition: {x: 0, y: 1.75, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 5332724029619758532}

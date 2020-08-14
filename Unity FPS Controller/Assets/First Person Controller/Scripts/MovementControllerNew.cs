@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public enum State { Standing, Crouching, Sprinting }
+public enum State { Standing, Crouching, Sprinting, Sliding }
 
 public class MovementControllerNew : MonoBehaviour
 {
@@ -22,7 +22,8 @@ public class MovementControllerNew : MonoBehaviour
     public bool IsGrounded          { get { return JumpAllowTimeTrack >= 0f; } }
     public bool TryingToMove        { get { return (inputVector.x == 0f && inputVector.y == 0f) ? false : true; } }
     public bool TryingToSprint      { get { return Controls.Movement.Sprint.ReadValue<float>() > 0.1f; } }
-    public bool SprintingIsValid    { get { return VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f); } }
+    public bool IsValidForwardInput { get { return VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f); } }
+    public bool InActionState       { get { return CurrentState == State.Sliding; } }
     public bool IsMoving            { get { return Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f; } }
 
     public CharacterController CC   { get; private set; }
@@ -60,10 +61,14 @@ public class MovementControllerNew : MonoBehaviour
     [SerializeField] private float crouchHeight = 0.85f;
     [SerializeField] private float crouchSpeed = 15f;
 
+    [Header("Slide Settings")]
+    [SerializeField] private float slideDuration = 2f;
+
     [Header("Physics Interaction")]
     [SerializeField] private float crouchPushPower = 1f;
     [SerializeField] private float normalPushPower = 2f;
     [SerializeField] private float sprintPushPower = 3f;
+    [SerializeField] private float slidePushPower = 4f;
     
     [Header("References")]
     [SerializeField] private Transform crouchObject;
@@ -73,6 +78,7 @@ public class MovementControllerNew : MonoBehaviour
     [SerializeField] private bool canJump = true;
     [SerializeField] private bool canSprint = true;
     [SerializeField] private bool canCrouch = true;
+    [SerializeField] private bool canSlide = true;
 
     #endregion
 
@@ -97,6 +103,10 @@ public class MovementControllerNew : MonoBehaviour
     private float initialHeight = 0f;
     private float initialCrouchObjectHeight = 0f;
     private Vector3 initialCenter = Vector3.zero;
+
+    // Slide Variables
+    private float currentSlideTimer = 0f;
+    private bool initiateSlide = false;
 
     // Speed Variables
     private float targetHorizontalSpeed = 0f;
@@ -151,8 +161,9 @@ public class MovementControllerNew : MonoBehaviour
         initialCrouchObjectHeight = crouchObject.localPosition.y;
         initialHeight = CC.height;
         initialCenter = CC.center;
-        
         ObjectIsAboveHead = false;
+
+        currentSlideTimer = slideDuration;
 
         #endregion
     }
@@ -163,6 +174,7 @@ public class MovementControllerNew : MonoBehaviour
         UpdateJumpSystem();
         UpdateSprintSystem();
         UpdateCrouchSystem();
+        UpdateSlideSystem();
         UpdateMovementSpeed();
 
         // Apply The Movement to the 'CharacterController'.
@@ -187,6 +199,13 @@ public class MovementControllerNew : MonoBehaviour
             return;
         }
 
+        // If the player tries to jump whilst sliding, cancel the slide and set state to 'Standing'.
+        if(CurrentState == State.Sliding && IsGrounded)
+        {
+            StopSlide(State.Standing);
+        }
+
+        // If the player can jump, initiate it.
         if(maxAmountOfJumps > 0 && JumpInputTrack <= 0f)
         {
             if(IsGrounded || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
@@ -200,10 +219,24 @@ public class MovementControllerNew : MonoBehaviour
     {
         if(canCrouch == false || ObjectIsAboveHead) return;
 
-        if(CurrentState != State.Sprinting && IsGrounded && JumpInputTrack <= 0f)
+        // Crouch / Un-crouch
+        if((CurrentState == State.Standing || CurrentState == State.Crouching) && IsGrounded && JumpInputTrack <= 0f)
         {
             SetState((CurrentState == State.Crouching) ? State.Standing : State.Crouching);
             if(OnCrouch != null) OnCrouch();
+        }
+
+        // Slide
+        else if(canSlide && CurrentState == State.Sprinting && IsGrounded && JumpInputTrack <= 0f)
+        {
+            initiateSlide = true;
+            if(OnCrouch != null) OnCrouch();
+        }
+
+        // Cancel Sliding
+        else if(CurrentState == State.Sliding && IsGrounded)
+        {
+            StopSlide(State.Standing);
         }
     }
 
@@ -222,7 +255,8 @@ public class MovementControllerNew : MonoBehaviour
             return;
         }
 
-        if(IsMoving && IsGrounded && SprintingIsValid && JumpInputTrack <= 0f)
+        // If the player is able to sprint, initiate it.
+        if(IsMoving && IsGrounded && IsValidForwardInput && !InActionState && JumpInputTrack <= 0f)
         {
             initiateSprint = true;
         }
@@ -266,32 +300,50 @@ public class MovementControllerNew : MonoBehaviour
     {        
         ObjectIsAboveHead = Physics.Raycast(transform.position + new Vector3(0f, CC.height, 0f), transform.up, (initialHeight - CC.height) + 0.025f);
 
-        float targetHeight = (CurrentState == State.Crouching) ? crouchHeight : initialHeight;
+        float targetHeight = (CurrentState == State.Crouching || CurrentState == State.Sliding) ? crouchHeight : initialHeight;
         CC.height = Mathf.Lerp(CC.height, targetHeight, crouchSpeed * Time.deltaTime);
-        CC.center = (CurrentState == State.Crouching) ? new Vector3(initialCenter.x, initialCenter.y - ((initialHeight - CC.height) / 2), initialCenter.z) : initialCenter;
+        CC.center = (CurrentState == State.Crouching || CurrentState == State.Sliding) ? new Vector3(initialCenter.x, initialCenter.y - ((initialHeight - CC.height) / 2), initialCenter.z) : initialCenter;
 
-        float targetCrouchObjectHeight = (CurrentState == State.Crouching) ? initialCrouchObjectHeight - (initialHeight - CC.height) : initialCrouchObjectHeight;
+        float targetCrouchObjectHeight = (CurrentState == State.Crouching || CurrentState == State.Sliding) ? initialCrouchObjectHeight - (initialHeight - CC.height) : initialCrouchObjectHeight;
         crouchObject.localPosition = Vector3.Lerp(crouchObject.localPosition, new Vector3(0f, targetCrouchObjectHeight, 0f), crouchSpeed * Time.deltaTime);
+    }
+
+    private void UpdateSlideSystem()
+    {
+        if(initiateSlide)
+        {
+            // Is Sliding
+            if(IsMoving && currentSlideTimer > 0 && IsValidForwardInput)
+            {
+                currentSlideTimer -= Time.deltaTime;
+                if(CurrentState != State.Sliding) SetState(State.Sliding);
+            }
+            // Finished Sliding
+            else
+            {
+                StopSlide(State.Crouching);
+            }
+        }
     }
     
     private void UpdateSprintSystem()
     {
-        // Continous sprint check.
-        if(IsMoving && IsGrounded && TryingToSprint && SprintingIsValid && !ObjectIsAboveHead && JumpInputTrack <= 0f)
+        // Continous Sprint Check
+        if(IsMoving && IsGrounded && TryingToSprint && IsValidForwardInput && !InActionState && !ObjectIsAboveHead && JumpInputTrack <= 0f)
         {
             initiateSprint = true;
         }
         
         if(initiateSprint)
         {            
-            if(IsMoving && IsGrounded && SprintingIsValid)
+            if(IsMoving && IsGrounded && IsValidForwardInput && !InActionState)
             {
                 if(CurrentState != State.Sprinting) SetState(State.Sprinting);
             }
-            else if(IsMoving == false || SprintingIsValid == false || IsGrounded == false)
+            else
             {
                 initiateSprint = false;
-                SetState(State.Standing);
+                if(CurrentState != State.Sliding) SetState(State.Standing);
             }
         }
     }
@@ -320,6 +372,13 @@ public class MovementControllerNew : MonoBehaviour
                 targetVerticalSpeed = forwardSprintSpeed;
                 break;
             }
+
+            case State.Sliding:
+            {
+                targetHorizontalSpeed = Mathf.Lerp(targetHorizontalSpeed, horizontalCrouchSpeed, 1f * Time.deltaTime);
+                targetVerticalSpeed = Mathf.Lerp(targetVerticalSpeed, forwardCrouchSpeed, 1f * Time.deltaTime);
+                break;
+            }
         }
 
 
@@ -330,6 +389,15 @@ public class MovementControllerNew : MonoBehaviour
         movementVector = transform.rotation * movementVector;
     }
 
+    private void StopSlide(State transitionState)
+    {
+        if(CurrentState != State.Sliding) return;
+
+        SetState(transitionState);
+        currentSlideTimer = slideDuration;
+        initiateSlide = false;
+    }
+    
     private void SetState(State state)
     {
         PreviousState = CurrentState;
@@ -348,6 +416,7 @@ public class MovementControllerNew : MonoBehaviour
 
         if(CurrentState == State.Crouching)         { finalPushPower = crouchPushPower; speedContributionRatio = 0.1f; }
         else if(CurrentState == State.Sprinting)    { finalPushPower = sprintPushPower; speedContributionRatio = 0.8f; }
+        else if(CurrentState == State.Sliding)      { finalPushPower = slidePushPower;  speedContributionRatio = 1f; }
         else                                        { finalPushPower = normalPushPower; speedContributionRatio = 0.3f; }
 
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);

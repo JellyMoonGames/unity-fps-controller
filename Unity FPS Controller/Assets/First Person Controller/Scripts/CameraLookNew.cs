@@ -78,7 +78,7 @@ public class CameraLookNew : MonoBehaviour
     private bool isCycleFinished = false;
     
     //Component References
-    private MovementControllerNew movementController;
+    private MovementControllerNew controller;
     private PlayerControls controls;
 
     #endregion
@@ -93,7 +93,7 @@ public class CameraLookNew : MonoBehaviour
 
     private void Awake()
     {
-        movementController = playerObject.GetComponent<MovementControllerNew>();
+        controller = playerObject.GetComponent<MovementControllerNew>();
         controls = new PlayerControls();
 
         controls.Movement.Look.performed += context => rawInputVector = context.ReadValue<Vector2>();
@@ -132,27 +132,27 @@ public class CameraLookNew : MonoBehaviour
     {
         if(!canHeadbob) return;
         
-        if(movementController.TryingToMove && movementController.IsMoving && movementController.JumpAllowTimeTrack >= 0.1f)
+        if(controller.TryingToMove && controller.IsMoving && controller.JumpAllowTimeTrack >= 0.1f && controller.CurrentState != State.Sliding)
         {
-            bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * normalHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-            * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
+            bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * normalHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+            * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
 
             xBobAmount = normalXBobAmount;
             yBobAmount = normalYBobAmount;
 
-            if(movementController.CurrentState == State.Crouching)
+            if(controller.CurrentState == State.Crouching)
             {
-                bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-                * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
+                bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+                * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
 
                 xBobAmount = crouchXBobAmount;
                 yBobAmount = crouchYBobAmount;
             }
 
-            if(movementController.ObjectIsAboveHead)
+            if(controller.ObjectIsAboveHead)
             {
-                bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-                * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
+                bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+                * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
 
                 xBobAmount = crouchXBobAmount;
 
@@ -162,10 +162,10 @@ public class CameraLookNew : MonoBehaviour
                     yBobAmount = 0.05f;
             }
 
-            if(movementController.CurrentState == State.Sprinting)
+            if(controller.CurrentState == State.Sprinting)
             {
-                bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * sprintHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-                * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
+                bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * sprintHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+                * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
 
                 xBobAmount = sprintXBobAmount;
                 yBobAmount = sprintYBobAmount;
@@ -175,9 +175,9 @@ public class CameraLookNew : MonoBehaviour
             timer += bobSpeed * Time.deltaTime;
 
             Vector3 newPosition = new Vector3 // -> below
-            (Mathf.Cos(timer) * xBobAmount * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f),                                        //x
-            headbobRestPosition.y + Mathf.Abs((Mathf.Sin(timer) * (yBobAmount * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f)))),  //y
-            headbobRestPosition.z);                                                                                                                                                                     //z
+            (Mathf.Cos(timer) * xBobAmount * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f),                                        // x
+            headbobRestPosition.y + Mathf.Abs((Mathf.Sin(timer) * (yBobAmount * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f)))),  // y
+            headbobRestPosition.z);                                                                                                                                                     // z
 
             headbobObjectPosition = newPosition;
         }
@@ -187,9 +187,9 @@ public class CameraLookNew : MonoBehaviour
             timer = Mathf.PI / 2f;
 
             Vector3 newPosition = new Vector3
-            (Mathf.Lerp(headbobObjectPosition.x, headbobRestPosition.x, transitionSpeed * Time.deltaTime),   //x
-            Mathf.Lerp(headbobObjectPosition.y, headbobRestPosition.y, transitionSpeed * Time.deltaTime),    //y
-            Mathf.Lerp(headbobObjectPosition.z, headbobRestPosition.z, transitionSpeed * Time.deltaTime));   //z
+            (Mathf.Lerp(headbobObjectPosition.x, headbobRestPosition.x, transitionSpeed * Time.deltaTime),   // x
+            Mathf.Lerp(headbobObjectPosition.y, headbobRestPosition.y, transitionSpeed * Time.deltaTime),    // y
+            Mathf.Lerp(headbobObjectPosition.z, headbobRestPosition.z, transitionSpeed * Time.deltaTime));   // z
 
             headbobObjectPosition = newPosition;
         }
@@ -215,7 +215,7 @@ public class CameraLookNew : MonoBehaviour
     {
         if(!canLean) return;
         
-        if(movementController.IsGrounded && movementController.CurrentState != State.Sprinting && movementController.JumpInputTrack <= 0f)
+        if(controller.IsGrounded && controller.CurrentState != State.Sprinting && controller.JumpInputTrack <= 0f)
         {
             if(controls.Movement.LeanLeft.ReadValue<float>() > 0)
             {
