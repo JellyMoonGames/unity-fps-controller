@@ -1,58 +1,74 @@
 using System;
 using UnityEngine;
+using UnityEngine.InputSystem;
+
+public enum State { Standing, Crouching, Sprinting, Sliding }
 
 public class MovementController : MonoBehaviour
 {
     #region Public Properties
 
-    public bool IsMoving { get; private set; }
-    public bool IsCrouching { get; private set; }
-    public bool IsSprinting { get; private set; }
-    public bool IsGrounded { get { return JumpAllowTimeTrack >= 0f; } }
-    public bool IsObjectAboveHead { get; private set; }
-    public float HorizontalSpeed { get; private set; }
-    public float VerticalSpeed { get; private set; }
-    public float HorizontalInput { get; private set; }
-    public float VerticalInput { get; private set; }
+    public State CurrentState       { get; private set; }
+    public State PreviousState      { get; private set; }
+
+    public float HorizontalSpeed    { get; private set; }
+    public float VerticalSpeed      { get; private set; }
+    public float HorizontalInput    { get; private set; }
+    public float VerticalInput      { get; private set; }
     public float JumpAllowTimeTrack { get; private set; }
-    public CharacterController CC { get; private set; }
+    public float JumpInputTrack     { get; private set; }
+
+    public bool ObjectIsAboveHead   { get; private set; }
+    public bool IsGrounded          { get { return JumpAllowTimeTrack >= 0f; } }
+    public bool TryingToMove        { get { return (inputVector.x == 0f && inputVector.y == 0f) ? false : true; } }
+    public bool TryingToSprint      { get { return Controls.Movement.Sprint.ReadValue<float>() > 0.1f; } }
+    public bool IsValidForwardInput { get { return VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f); } }
+    public bool InActionState       { get { return CurrentState == State.Sliding; } }
+    public bool IsMoving            { get { return Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f; } }
+
+    public CharacterController CC   { get; private set; }
+    public PlayerControls Controls  { get; private set; }
 
     #endregion
 
     #region Inspector Variables
     
     [Header("Crouch Speed")]
-    [SerializeField] private float forwardCrouchSpeed = 5f;
-    [SerializeField] private float backwardCrouchSpeed = 5f;
-    [SerializeField] private float horizontalCrouchSpeed = 5f;
+    [SerializeField] private float forwardCrouchSpeed = 2f;
+    [SerializeField] private float backwardCrouchSpeed = 2f;
+    [SerializeField] private float horizontalCrouchSpeed = 2f;
 
     [Header("Walk Speed")]
-    [SerializeField] private float forwardWalkSpeed = 5f;
-    [SerializeField] private float backwardWalkSpeed = 5f;
-    [SerializeField] private float horizontalWalkSpeed = 5f;
+    [SerializeField] private float forwardWalkSpeed = 4f;
+    [SerializeField] private float backwardWalkSpeed = 4f;
+    [SerializeField] private float horizontalWalkSpeed = 4f;
 
     [Header("Sprint Speed")]
-    [SerializeField] private float forwardSprintSpeed = 5f;
+    [SerializeField] private float forwardSprintSpeed = 6f;
 
     [Header("Movement Settings")]
-    [SerializeField] private float movementSpeedSmoothAmount = 0.15f;
-    [SerializeField] private float groundSmoothAmount = 0.15f;
+    [SerializeField] private float movementTransitionSpeed = 3f;
+    [SerializeField] private float groundSmoothAmount = 0.1f;
     [SerializeField] private float airSmoothAmount = 0.5f;
 
     [Header("Jump Settings")]
-    [SerializeField] private float jumpSpeed = 5f;
-    [SerializeField] private float gravity = 9.81f;
+    [SerializeField] private float jumpSpeed = 15f;
+    [SerializeField] private float gravity = 18f;
     [SerializeField] private int maxAmountOfJumps = 1;
-    [SerializeField] private bool canJumpInMidAir = false;
+    [SerializeField] private bool canAirJump = false;
 
     [Header("Crouch Settings")]
-    [SerializeField] private float crouchHeight = 1.1f;
+    [SerializeField] private float crouchHeight = 0.85f;
     [SerializeField] private float crouchSpeed = 15f;
 
+    [Header("Slide Settings")]
+    [SerializeField] private float slideDuration = 2f;
+
     [Header("Physics Interaction")]
-    [SerializeField] private float crouchPushPower = 2f;
+    [SerializeField] private float crouchPushPower = 1f;
     [SerializeField] private float normalPushPower = 2f;
-    [SerializeField] private float sprintPushPower = 2f;
+    [SerializeField] private float sprintPushPower = 3f;
+    [SerializeField] private float slidePushPower = 4f;
     
     [Header("References")]
     [SerializeField] private Transform crouchObject;
@@ -62,34 +78,44 @@ public class MovementController : MonoBehaviour
     [SerializeField] private bool canJump = true;
     [SerializeField] private bool canSprint = true;
     [SerializeField] private bool canCrouch = true;
+    [SerializeField] private bool canSlide = true;
 
     #endregion
 
     #region Private Variables
 
-    //Input variables
-    private float horizontalInputRaw = 0f;
-    private float horizontalInputVelocity = 0f;
-    private float verticalInputRaw = 0f;
-    private float verticalInputVelocity = 0f;
-    private Vector3 inputVector = Vector3.zero;
+    // Input variables
+    private Vector2 inputVector = Vector2.zero;
     private Vector3 movementVector = Vector3.zero;
+    private float horizontalInputVelocity = 0f;
+    private float verticalInputVelocity = 0f;
 
-    //Jump Variables
-    private float verticalVelocity = 0f;
+    // Jump Variables
     private int currentAmountOfJumps = 0;
+    private float verticalVelocity = 0f;
     private float inputSmoothAmount = 0f;
     private float waitToLandTrack = 0f;
     private float jumpAllowTime = 0.2f;
     private float jumpInputDelayTime = 0.21f; // Must be greater than or equal to 'jumpAllowTime'
-    private float jumpInputTrack = 0f;
+    private bool initiateJump = false;
 
-    //Crouch Variables
+    // Crouch Variables
     private float initialHeight = 0f;
-    private Vector3 initialCenter = Vector3.zero;
     private float initialCrouchObjectHeight = 0f;
+    private Vector3 initialCenter = Vector3.zero;
+
+    // Slide Variables
+    private float currentSlideTimer = 0f;
+    private bool initiateSlide = false;
+
+    // Speed Variables
+    private float targetHorizontalSpeed = 0f;
+    private float targetVerticalSpeed = 0f;
+
+    // Sprint Variables
+    private bool initiateSprint = false;
     
-    //Component References
+    // Component References
     private Rigidbody hitRigidbody;
 
     #endregion
@@ -105,11 +131,28 @@ public class MovementController : MonoBehaviour
     private void Awake()
     {
         CC = GetComponent<CharacterController>();
+        Controls = new PlayerControls();
+
+        // Input Events
+        Controls.Movement.Move.performed += context => inputVector = context.ReadValue<Vector2>();
+        Controls.Movement.Crouch.performed += Crouch;
+        Controls.Movement.Jump.performed += Jump;
+        Controls.Movement.Sprint.performed += Sprint;
+        Controls.Movement.Sprint.canceled += delegate
+        { 
+            if(CurrentState == State.Sprinting)
+            {
+                initiateSprint = false;
+                SetState(State.Standing);
+            }
+        };
     }
 
     private void Start()
     {
         #region Initialising Variables
+
+        PreviousState = CurrentState;
 
         JumpAllowTimeTrack = jumpAllowTime;
         inputSmoothAmount = groundSmoothAmount;
@@ -118,10 +161,9 @@ public class MovementController : MonoBehaviour
         initialCrouchObjectHeight = crouchObject.localPosition.y;
         initialHeight = CC.height;
         initialCenter = CC.center;
+        ObjectIsAboveHead = false;
 
-        IsCrouching = false;
-        IsSprinting = false;
-        IsObjectAboveHead = false;
+        currentSlideTimer = slideDuration;
 
         #endregion
     }
@@ -129,29 +171,98 @@ public class MovementController : MonoBehaviour
     private void Update()
     {
         HandleInput();
-        Jumping();
-        Movement();
-        Crouching();
+        UpdateJumpSystem();
+        UpdateSprintSystem();
+        UpdateCrouchSystem();
+        UpdateSlideSystem();
+        UpdateMovementSpeed();
 
-        //Apply The Movement
+        // Apply The Movement to the 'CharacterController'.
         CC.Move(movementVector * Time.deltaTime);
     }
 
     private void HandleInput()
     {
-        horizontalInputRaw = Input.GetAxisRaw("Horizontal");
-        verticalInputRaw = Input.GetAxisRaw("Vertical");
+        HorizontalInput = (canMove) ? Mathf.SmoothDamp(HorizontalInput, inputVector.x, ref horizontalInputVelocity, inputSmoothAmount) : 0f;
+        VerticalInput = (canMove) ? Mathf.SmoothDamp(VerticalInput, inputVector.y, ref verticalInputVelocity, inputSmoothAmount) : 0f;
+    }
+    
+    private void Jump(InputAction.CallbackContext context)
+    {
+        if(canJump == false || ObjectIsAboveHead) return;
 
-        HorizontalInput = (canMove) ? Mathf.SmoothDamp(HorizontalInput, horizontalInputRaw, ref horizontalInputVelocity, inputSmoothAmount) : 0f;
-        VerticalInput = (canMove) ? Mathf.SmoothDamp(VerticalInput, verticalInputRaw, ref verticalInputVelocity, inputSmoothAmount) : 0f;
+        // If the player tries to jump and they are currently crouched, un-crouch.
+        if(CurrentState == State.Crouching)
+        {
+            SetState(State.Standing);
+            if(OnCrouch != null) OnCrouch();
+            return;
+        }
 
-        inputVector = new Vector3(HorizontalInput, 0f, VerticalInput);
-        if(inputVector.magnitude >= 1f) inputVector.Normalize();
+        // If the player tries to jump whilst sliding, cancel the slide and set state to 'Standing'.
+        if(CurrentState == State.Sliding && IsGrounded)
+        {
+            StopSlide(State.Standing);
+        }
 
-        IsMoving = (horizontalInputRaw == 0f && verticalInputRaw == 0f) ? false : true;
+        // If the player can jump, initiate it.
+        if(maxAmountOfJumps > 0 && JumpInputTrack <= 0f)
+        {
+            if(IsGrounded || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
+            {
+                initiateJump = true;
+            }
+        }
     }
 
-    private void Jumping()
+    private void Crouch(InputAction.CallbackContext context)
+    {
+        if(canCrouch == false || ObjectIsAboveHead) return;
+
+        // Crouch / Un-crouch
+        if((CurrentState == State.Standing || CurrentState == State.Crouching) && IsGrounded && JumpInputTrack <= 0f)
+        {
+            SetState((CurrentState == State.Crouching) ? State.Standing : State.Crouching);
+            if(OnCrouch != null) OnCrouch();
+        }
+
+        // Slide
+        else if(canSlide && CurrentState == State.Sprinting && IsGrounded && JumpInputTrack <= 0f)
+        {
+            initiateSlide = true;
+            if(OnCrouch != null) OnCrouch();
+        }
+
+        // Cancel Sliding
+        else if(CurrentState == State.Sliding && IsGrounded)
+        {
+            StopSlide(State.Standing);
+        }
+    }
+
+    private void Sprint(InputAction.CallbackContext context)
+    {
+        if(canSprint == false || ObjectIsAboveHead) return;
+
+        // If the player tries to sprint and they are currently crouched, un-crouch.
+        if(CurrentState == State.Crouching)
+        {
+            if(VerticalInput > 0f) initiateSprint = true;
+            else SetState(State.Standing);
+
+            if(OnCrouch != null) OnCrouch();
+
+            return;
+        }
+
+        // If the player is able to sprint, initiate it.
+        if(IsMoving && IsGrounded && IsValidForwardInput && !InActionState && JumpInputTrack <= 0f)
+        {
+            initiateSprint = true;
+        }
+    }
+
+    private void UpdateJumpSystem()
     {
         if(CC.isGrounded)
         {
@@ -159,7 +270,7 @@ public class MovementController : MonoBehaviour
             JumpAllowTimeTrack = jumpAllowTime;
             waitToLandTrack -= Time.deltaTime;
             currentAmountOfJumps = 0;
-            jumpInputTrack = 0;
+            JumpInputTrack = 0;
         }
         else
         {
@@ -169,128 +280,130 @@ public class MovementController : MonoBehaviour
             verticalVelocity -= gravity * Time.deltaTime;
         }
 
-        jumpInputTrack -= Time.deltaTime;
+        JumpInputTrack -= Time.deltaTime;
         
         if(waitToLandTrack <= 0f) verticalVelocity = 0f;
         if(maxAmountOfJumps <= 0) maxAmountOfJumps = 0;
 
-        if(canJump)
+        if(initiateJump)
         {
-            if(maxAmountOfJumps > 0 && jumpInputTrack <= 0f)
-            {
-                if(Input.GetButtonDown("Jump") && IsCrouching == false)
-                {
-                    if(IsGrounded)
-                    {
-                        verticalVelocity = jumpSpeed;
-                        jumpInputTrack = jumpInputDelayTime;
-                        currentAmountOfJumps++;
-                        if(OnJump != null) OnJump();
-                    }
-                    else if(IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canJumpInMidAir)
-                    {
-                        verticalVelocity = jumpSpeed;
-                        jumpInputTrack = jumpInputDelayTime;
-                        currentAmountOfJumps++;
-                        if(OnJump != null) OnJump();
-                    }
-                }
-            }
+            verticalVelocity = jumpSpeed;
+            JumpInputTrack = jumpInputDelayTime;
+            currentAmountOfJumps++;
+            if(OnJump != null) OnJump();
+
+            initiateJump = false;
         }
     }
 
-    private void Crouching()
-    {
-        IsObjectAboveHead = Physics.Raycast(transform.position + new Vector3(0f, CC.height, 0f), transform.up, (initialHeight - CC.height) + 0.025f);
+    private void UpdateCrouchSystem()
+    {        
+        ObjectIsAboveHead = Physics.Raycast(transform.position + new Vector3(0f, CC.height, 0f), transform.up, (initialHeight - CC.height) + 0.025f);
 
-        if(canCrouch)
-        {
-            if(IsSprinting == false && IsGrounded && jumpInputTrack <= 0f)
-            {
-                if(Input.GetButtonDown("Crouch") && IsObjectAboveHead)
-                {
-                    IsCrouching = true;
-                }
-
-                if(Input.GetButtonDown("Crouch") && IsObjectAboveHead == false)
-                {
-                    IsCrouching = !IsCrouching;
-                    if(OnCrouch != null) OnCrouch();
-                }
-
-                if((Input.GetButtonDown("Jump") || Input.GetButtonDown("Sprint")) && IsCrouching && IsObjectAboveHead == false)
-                {
-                    IsCrouching = false;
-                    if(OnCrouch != null) OnCrouch();
-                }
-            }
-        }
-        else
-        {
-            IsCrouching = false;
-        }
-        
-        float targetHeight = (IsCrouching) ? crouchHeight : initialHeight;
+        float targetHeight = (CurrentState == State.Crouching || CurrentState == State.Sliding) ? crouchHeight : initialHeight;
         CC.height = Mathf.Lerp(CC.height, targetHeight, crouchSpeed * Time.deltaTime);
-        CC.center = (IsCrouching) ? new Vector3(initialCenter.x, initialCenter.y - ((initialHeight - CC.height) / 2), initialCenter.z) : initialCenter;
+        CC.center = (CurrentState == State.Crouching || CurrentState == State.Sliding) ? new Vector3(initialCenter.x, initialCenter.y - ((initialHeight - CC.height) / 2), initialCenter.z) : initialCenter;
 
-        float targetCrouchObjectHeight = (IsCrouching) ? initialCrouchObjectHeight - (initialHeight - CC.height) : initialCrouchObjectHeight;
+        float targetCrouchObjectHeight = (CurrentState == State.Crouching || CurrentState == State.Sliding) ? initialCrouchObjectHeight - (initialHeight - CC.height) : initialCrouchObjectHeight;
         crouchObject.localPosition = Vector3.Lerp(crouchObject.localPosition, new Vector3(0f, targetCrouchObjectHeight, 0f), crouchSpeed * Time.deltaTime);
     }
 
-    private void Movement()
-    {   
-        if(Input.GetButton("Sprint") && IsObjectAboveHead == false && canSprint)
+    private void UpdateSlideSystem()
+    {
+        if(initiateSlide)
         {
-            IsCrouching = false;
-            
-            if(VerticalInput > 0f)
+            // Is Sliding
+            if(IsMoving && currentSlideTimer > 0 && IsValidForwardInput)
             {
-                if(HorizontalInput <= 0.3f && HorizontalInput >= 0f || HorizontalInput >= -0.3f && HorizontalInput <= 0f)
-                {
-                    IsSprinting = true;
-                }
-                else
-                {
-                    IsSprinting = false;
-                }
+                currentSlideTimer -= Time.deltaTime;
+                if(CurrentState != State.Sliding) SetState(State.Sliding);
+            }
+            // Finished Sliding
+            else
+            {
+                StopSlide(State.Crouching);
+            }
+        }
+    }
+    
+    private void UpdateSprintSystem()
+    {
+        // Continous Sprint Check
+        if(IsMoving && IsGrounded && TryingToSprint && IsValidForwardInput && !InActionState && !ObjectIsAboveHead && JumpInputTrack <= 0f)
+        {
+            initiateSprint = true;
+        }
+        
+        if(initiateSprint)
+        {            
+            if(IsMoving && IsGrounded && IsValidForwardInput && !InActionState)
+            {
+                if(CurrentState != State.Sprinting) SetState(State.Sprinting);
+            }
+            else
+            {
+                initiateSprint = false;
+                if(CurrentState != State.Sliding) SetState(State.Standing);
+            }
+        }
+    }
+
+    private void UpdateMovementSpeed()
+    {
+        switch(CurrentState)
+        {
+            case State.Standing:
+            {
+                targetHorizontalSpeed = horizontalWalkSpeed;
+                targetVerticalSpeed = (VerticalInput >= 0f) ? forwardWalkSpeed : backwardWalkSpeed;
+                break;
+            }
+            
+            case State.Crouching:
+            {
+                targetHorizontalSpeed = horizontalCrouchSpeed;
+                targetVerticalSpeed = (VerticalInput >= 0f) ? forwardCrouchSpeed : backwardCrouchSpeed;
+                break;
+            }
+
+            case State.Sprinting:
+            {
+                targetHorizontalSpeed = horizontalWalkSpeed;
+                targetVerticalSpeed = forwardSprintSpeed;
+                break;
+            }
+
+            case State.Sliding:
+            {
+                targetHorizontalSpeed = Mathf.Lerp(targetHorizontalSpeed, horizontalCrouchSpeed, 1f * Time.deltaTime);
+                targetVerticalSpeed = Mathf.Lerp(targetVerticalSpeed, forwardCrouchSpeed, 1f * Time.deltaTime);
+                break;
             }
         }
 
-        if(Input.GetButton("Sprint") == false || IsGrounded == false || VerticalInput < 0f)
-        {
-            IsSprinting = false;
-        }
 
-        //Walking Speed
-        if(IsCrouching == false && IsSprinting == false)
-        {
-            HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, horizontalWalkSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-
-            if(VerticalInput > 0f) VerticalSpeed = Mathf.Lerp(VerticalSpeed, forwardWalkSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-            if(VerticalInput < 0f) VerticalSpeed = Mathf.Lerp(VerticalSpeed, backwardWalkSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-        }
+        HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, targetHorizontalSpeed, movementTransitionSpeed * Time.deltaTime);
+        VerticalSpeed = Mathf.Lerp(VerticalSpeed, targetVerticalSpeed, movementTransitionSpeed * Time.deltaTime);
         
-        //Crouching Speed
-        if(IsCrouching && IsSprinting == false)
-        {
-            HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, horizontalCrouchSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-
-            if(VerticalInput > 0f) VerticalSpeed = Mathf.Lerp(VerticalSpeed, forwardCrouchSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-            if(VerticalInput < 0f) VerticalSpeed = Mathf.Lerp(VerticalSpeed, backwardCrouchSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-        }
-
-        //Sprinting Speed
-        if(IsSprinting && IsCrouching == false)
-        {
-            HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, horizontalWalkSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-            VerticalSpeed = Mathf.Lerp(VerticalSpeed, forwardSprintSpeed, movementSpeedSmoothAmount * Time.deltaTime);
-        }
-        
-        movementVector = new Vector3(inputVector.x * HorizontalSpeed, verticalVelocity, inputVector.z * VerticalSpeed);
+        movementVector = new Vector3(HorizontalInput * HorizontalSpeed, verticalVelocity, VerticalInput * VerticalSpeed);
         movementVector = transform.rotation * movementVector;
     }
 
+    private void StopSlide(State transitionState)
+    {
+        if(CurrentState != State.Sliding) return;
+
+        SetState(transitionState);
+        currentSlideTimer = slideDuration;
+        initiateSlide = false;
+    }
+    
+    private void SetState(State state)
+    {
+        PreviousState = CurrentState;
+        CurrentState = state;
+    }
+    
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         #region Physics Interaction
@@ -299,15 +412,21 @@ public class MovementController : MonoBehaviour
         if(hitRigidbody == null || hitRigidbody.isKinematic || hit.moveDirection.y < -0.3f) return;
 
         float finalPushPower;
-        
-        if(IsCrouching) finalPushPower = crouchPushPower;
-        else if(IsSprinting) finalPushPower = sprintPushPower;
-        else finalPushPower = normalPushPower;
+        float speedContributionRatio;
+
+        if(CurrentState == State.Crouching)         { finalPushPower = crouchPushPower; speedContributionRatio = 0.1f; }
+        else if(CurrentState == State.Sprinting)    { finalPushPower = sprintPushPower; speedContributionRatio = 0.8f; }
+        else if(CurrentState == State.Sliding)      { finalPushPower = slidePushPower;  speedContributionRatio = 1f; }
+        else                                        { finalPushPower = normalPushPower; speedContributionRatio = 0.3f; }
 
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
-        hitRigidbody.velocity = pushDirection * (finalPushPower * Mathf.Clamp(Mathf.Abs(HorizontalInput) + Mathf.Abs(VerticalInput), 0, 1));
+        float pushVelocity = finalPushPower * Mathf.Clamp(Mathf.Abs(HorizontalInput) + Mathf.Abs(VerticalInput), 0, 1) + ((CC.velocity.x + CC.velocity.y + CC.velocity.z) / 3f) * speedContributionRatio;
+        hitRigidbody.velocity = pushDirection * pushVelocity;
         if(OnHitPhysicsObject != null) OnHitPhysicsObject();
 
         #endregion
     }
+
+    private void OnEnable() => Controls.Enable();
+    private void OnDisable() => Controls.Disable();
 }

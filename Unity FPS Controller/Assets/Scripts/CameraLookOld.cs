@@ -1,8 +1,7 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
-public class CameraLookNew : MonoBehaviour
+public class CameraLookOld : MonoBehaviour
 {
     #region Public Properties
 
@@ -55,9 +54,10 @@ public class CameraLookNew : MonoBehaviour
     #region Private Variables
 
     //Camera Look
-    private Vector2 rawInputVector = Vector2.zero;
+    private float xAxisRaw = 0f;
     private float xAxisVelocity = 0f;
     private float xAxis = 0f;
+    private float yAxisRaw = 0f;
     private float yAxisVelocity = 0f;
     private float yAxis = 0f;
     private float verticalRotation = 0f;
@@ -78,8 +78,7 @@ public class CameraLookNew : MonoBehaviour
     private bool isCycleFinished = false;
     
     //Component References
-    private MovementControllerNew controller;
-    private PlayerControls controls;
+    private MovementControllerOld movementController;
 
     #endregion
 
@@ -93,10 +92,7 @@ public class CameraLookNew : MonoBehaviour
 
     private void Awake()
     {
-        controller = playerObject.GetComponent<MovementControllerNew>();
-        controls = new PlayerControls();
-
-        controls.Movement.Look.performed += context => rawInputVector = context.ReadValue<Vector2>();
+        movementController = playerObject.GetComponent<MovementControllerOld>();
     }
 
     private void Start()
@@ -132,27 +128,27 @@ public class CameraLookNew : MonoBehaviour
     {
         if(!canHeadbob) return;
         
-        if(controller.TryingToMove && controller.IsMoving && controller.JumpAllowTimeTrack >= 0.1f && controller.CurrentState != State.Sliding)
+        if(movementController.IsMoving && movementController.JumpAllowTimeTrack >= 0.1f)
         {
-            bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * normalHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-            * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
+            bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * normalHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+            * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
 
             xBobAmount = normalXBobAmount;
             yBobAmount = normalYBobAmount;
 
-            if(controller.CurrentState == State.Crouching)
+            if(movementController.IsCrouching)
             {
-                bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-                * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
+                bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+                * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
 
                 xBobAmount = crouchXBobAmount;
                 yBobAmount = crouchYBobAmount;
             }
 
-            if(controller.ObjectIsAboveHead)
+            if(movementController.IsObjectAboveHead)
             {
-                bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-                * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
+                bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+                * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
 
                 xBobAmount = crouchXBobAmount;
 
@@ -162,10 +158,10 @@ public class CameraLookNew : MonoBehaviour
                     yBobAmount = 0.05f;
             }
 
-            if(controller.CurrentState == State.Sprinting)
+            if(movementController.IsSprinting)
             {
-                bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * sprintHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
-                * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
+                bobSpeed = Mathf.Abs((((movementController.HorizontalSpeed + movementController.VerticalSpeed) / 2f) * sprintHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
+                * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f));
 
                 xBobAmount = sprintXBobAmount;
                 yBobAmount = sprintYBobAmount;
@@ -175,9 +171,9 @@ public class CameraLookNew : MonoBehaviour
             timer += bobSpeed * Time.deltaTime;
 
             Vector3 newPosition = new Vector3 // -> below
-            (Mathf.Cos(timer) * xBobAmount * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f),                                        // x
-            headbobRestPosition.y + Mathf.Abs((Mathf.Sin(timer) * (yBobAmount * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f)))),  // y
-            headbobRestPosition.z);                                                                                                                                                     // z
+            (Mathf.Cos(timer) * xBobAmount * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f),                                        //x
+            headbobRestPosition.y + Mathf.Abs((Mathf.Sin(timer) * (yBobAmount * Mathf.Clamp((Mathf.Abs(movementController.HorizontalInput) + Mathf.Abs(movementController.VerticalInput)), 0f, 1f)))),  //y
+            headbobRestPosition.z);                                                                                                                                                                     //z
 
             headbobObjectPosition = newPosition;
         }
@@ -187,9 +183,9 @@ public class CameraLookNew : MonoBehaviour
             timer = Mathf.PI / 2f;
 
             Vector3 newPosition = new Vector3
-            (Mathf.Lerp(headbobObjectPosition.x, headbobRestPosition.x, transitionSpeed * Time.deltaTime),   // x
-            Mathf.Lerp(headbobObjectPosition.y, headbobRestPosition.y, transitionSpeed * Time.deltaTime),    // y
-            Mathf.Lerp(headbobObjectPosition.z, headbobRestPosition.z, transitionSpeed * Time.deltaTime));   // z
+            (Mathf.Lerp(headbobObjectPosition.x, headbobRestPosition.x, transitionSpeed * Time.deltaTime),   //x
+            Mathf.Lerp(headbobObjectPosition.y, headbobRestPosition.y, transitionSpeed * Time.deltaTime),    //y
+            Mathf.Lerp(headbobObjectPosition.z, headbobRestPosition.z, transitionSpeed * Time.deltaTime));   //z
 
             headbobObjectPosition = newPosition;
         }
@@ -215,9 +211,9 @@ public class CameraLookNew : MonoBehaviour
     {
         if(!canLean) return;
         
-        if(controller.IsGrounded && controller.CurrentState != State.Sprinting && controller.JumpInputTrack <= 0f)
+        if(movementController.JumpAllowTimeTrack >= 0.1f && movementController.IsSprinting == false)
         {
-            if(controls.Movement.LeanLeft.ReadValue<float>() > 0)
+            if(Input.GetButton("Lean_Left"))
             {
                 targetPosition = new Vector3(-leanMovementAmount, initialPosition.y, initialPosition.z);
                 targetRotation = Quaternion.Euler(0f, 0f, leanRotationAmount);
@@ -225,7 +221,7 @@ public class CameraLookNew : MonoBehaviour
                 if(OnLean != null) OnLean();
             }
             
-            else if(controls.Movement.LeanRight.ReadValue<float>() > 0)
+            else if(Input.GetButton("Lean_Right"))
             {
                 targetPosition = new Vector3(leanMovementAmount, initialPosition.y, initialPosition.z);
                 targetRotation = Quaternion.Euler(0f, 0f, -leanRotationAmount);
@@ -233,7 +229,7 @@ public class CameraLookNew : MonoBehaviour
                 if(OnLean != null) OnLean();
             }
 
-            else if(controls.Movement.LeanLeft.ReadValue<float>() == 0 && controls.Movement.LeanRight.ReadValue<float>() == 0)
+            else if(Input.GetButton("Lean_Left") == false && Input.GetButton("Lean_Right") == false)
             {
                 targetPosition = initialPosition;
                 targetRotation = initialRotation;
@@ -250,16 +246,19 @@ public class CameraLookNew : MonoBehaviour
 
     private void LookRotation()
     {
-        xAxis = Mathf.SmoothDamp(xAxis, rawInputVector.x, ref xAxisVelocity, smoothAmount);
-        yAxis = Mathf.SmoothDamp(yAxis, rawInputVector.y, ref yAxisVelocity, smoothAmount);
+        xAxisRaw = Input.GetAxisRaw("Mouse X");
+        yAxisRaw = Input.GetAxisRaw("Mouse Y");
+
+        xAxis = Mathf.SmoothDamp(xAxis, xAxisRaw, ref xAxisVelocity, smoothAmount);
+        yAxis = Mathf.SmoothDamp(yAxis, yAxisRaw, ref yAxisVelocity, smoothAmount);
         
-        verticalRotation -= (yAxis * 0.1f * 0.222f) * lookSensitivity;
+        verticalRotation -= yAxis * lookSensitivity;
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
     }
 
     private void ApplyMovement()
     {
-        playerObject.Rotate(0f, (xAxis * 0.1f * 0.222f) * lookSensitivity, 0f);
+        playerObject.Rotate(0f, xAxis * lookSensitivity, 0f);
         transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
 
         if(canLean)
@@ -270,7 +269,4 @@ public class CameraLookNew : MonoBehaviour
 
         if(canHeadbob) headbobObject.localPosition = Vector3.Lerp(headbobObject.localPosition, headbobObjectPosition, 5f * Time.deltaTime);
     }
-
-    private void OnEnable() => controls.Enable();
-    private void OnDisable() => controls.Disable();
 }
