@@ -19,12 +19,12 @@ public class MovementController : MonoBehaviour
     public float JumpInputTrack     { get; private set; }
 
     public bool ObjectIsAboveHead   { get; private set; }
-    public bool IsGrounded          { get { return JumpAllowTimeTrack >= 0f; } }
-    public bool TryingToMove        { get { return (inputVector.x == 0f && inputVector.y == 0f) ? false : true; } }
-    public bool TryingToSprint      { get { return Controls.Movement.Sprint.ReadValue<float>() > 0.1f; } }
-    public bool IsValidForwardInput { get { return VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f); } }
-    public bool InActionState       { get { return CurrentState == State.Sliding; } }
-    public bool IsMoving            { get { return Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f; } }
+    public bool IsGrounded          => JumpAllowTimeTrack >= 0f;
+    public bool TryingToMove        => inputVector.x == 0f && inputVector.y == 0f ? false : true;
+    public bool TryingToSprint      => Controls.Movement.Sprint.ReadValue<float>() > 0.1f;
+    public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
+    public bool InActionState       => CurrentState == State.Sliding;
+    public bool IsMoving            => Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f;
 
     public CharacterController CC   { get; private set; }
     public PlayerControls Controls  { get; private set; }
@@ -195,7 +195,7 @@ public class MovementController : MonoBehaviour
         if(CurrentState == State.Crouching)
         {
             SetState(State.Standing);
-            if(OnCrouch != null) OnCrouch();
+            OnCrouch?.Invoke();
             return;
         }
 
@@ -223,14 +223,14 @@ public class MovementController : MonoBehaviour
         if((CurrentState == State.Standing || CurrentState == State.Crouching) && IsGrounded && JumpInputTrack <= 0f)
         {
             SetState((CurrentState == State.Crouching) ? State.Standing : State.Crouching);
-            if(OnCrouch != null) OnCrouch();
+            OnCrouch?.Invoke();
         }
 
         // Slide
         else if(canSlide && CurrentState == State.Sprinting && IsGrounded && JumpInputTrack <= 0f)
         {
             initiateSlide = true;
-            if(OnCrouch != null) OnCrouch();
+            OnCrouch?.Invoke();
         }
 
         // Cancel Sliding
@@ -250,7 +250,7 @@ public class MovementController : MonoBehaviour
             if(VerticalInput > 0f) initiateSprint = true;
             else SetState(State.Standing);
 
-            if(OnCrouch != null) OnCrouch();
+            OnCrouch?.Invoke();
 
             return;
         }
@@ -290,7 +290,7 @@ public class MovementController : MonoBehaviour
             verticalVelocity = jumpSpeed;
             JumpInputTrack = jumpInputDelayTime;
             currentAmountOfJumps++;
-            if(OnJump != null) OnJump();
+            OnJump?.Invoke();
 
             initiateJump = false;
         }
@@ -422,7 +422,7 @@ public class MovementController : MonoBehaviour
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
         float pushVelocity = finalPushPower * Mathf.Clamp(Mathf.Abs(HorizontalInput) + Mathf.Abs(VerticalInput), 0, 1) + ((CC.velocity.x + CC.velocity.y + CC.velocity.z) / 3f) * speedContributionRatio;
         hitRigidbody.velocity = pushDirection * pushVelocity;
-        if(OnHitPhysicsObject != null) OnHitPhysicsObject();
+        OnHitPhysicsObject?.Invoke();
 
         #endregion
     }

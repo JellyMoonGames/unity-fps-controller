@@ -13,7 +13,7 @@ public class CameraLook : MonoBehaviour
     #region Inspector Variables
 
     [Header("Camera Look Settings")]
-    [SerializeField] private float lookSensitivity = 3f;
+    [SerializeField] private float lookSensitivity = 1f;
     [SerializeField] private float smoothAmount = 0f;
     [SerializeField] private float upDownRange = 85f;
 
@@ -55,7 +55,7 @@ public class CameraLook : MonoBehaviour
     #region Private Variables
 
     //Camera Look
-    private Vector2 rawInputVector = Vector2.zero;
+    private Vector2 inputVector = Vector2.zero;
     private float xAxisVelocity = 0f;
     private float xAxis = 0f;
     private float yAxisVelocity = 0f;
@@ -96,7 +96,7 @@ public class CameraLook : MonoBehaviour
         controller = playerObject.GetComponent<MovementController>();
         controls = new PlayerControls();
 
-        controls.Movement.Look.performed += context => rawInputVector = context.ReadValue<Vector2>();
+        controls.Movement.Look.performed += context => inputVector = context.ReadValue<Vector2>();
     }
 
     private void Start()
@@ -201,13 +201,13 @@ public class CameraLook : MonoBehaviour
         if(timer == 0f)
         {
             isCycleFinished = true;
-            if(OnFootstepRight != null) OnFootstepRight();
+            OnFootstepRight?.Invoke();
 
         }
         else if(isCycleFinished && timer >= Mathf.PI - 0.1f && timer <= Mathf.PI + 0.1f)
         {
             isCycleFinished = false;
-            if(OnFootstepLeft != null) OnFootstepLeft();
+            OnFootstepLeft?.Invoke();
         }
     }
 
@@ -222,7 +222,7 @@ public class CameraLook : MonoBehaviour
                 targetPosition = new Vector3(-leanMovementAmount, initialPosition.y, initialPosition.z);
                 targetRotation = Quaternion.Euler(0f, 0f, leanRotationAmount);
                 IsLeaning = true;
-                if(OnLean != null) OnLean();
+                OnLean?.Invoke();
             }
             
             else if(controls.Movement.LeanRight.ReadValue<float>() > 0)
@@ -230,7 +230,7 @@ public class CameraLook : MonoBehaviour
                 targetPosition = new Vector3(leanMovementAmount, initialPosition.y, initialPosition.z);
                 targetRotation = Quaternion.Euler(0f, 0f, -leanRotationAmount);
                 IsLeaning = true;
-                if(OnLean != null) OnLean();
+                OnLean?.Invoke();
             }
 
             else if(controls.Movement.LeanLeft.ReadValue<float>() == 0 && controls.Movement.LeanRight.ReadValue<float>() == 0)
@@ -250,8 +250,8 @@ public class CameraLook : MonoBehaviour
 
     private void LookRotation()
     {
-        xAxis = Mathf.SmoothDamp(xAxis, rawInputVector.x, ref xAxisVelocity, smoothAmount);
-        yAxis = Mathf.SmoothDamp(yAxis, rawInputVector.y, ref yAxisVelocity, smoothAmount);
+        xAxis = Mathf.SmoothDamp(xAxis, inputVector.x, ref xAxisVelocity, smoothAmount);
+        yAxis = Mathf.SmoothDamp(yAxis, inputVector.y, ref yAxisVelocity, smoothAmount);
         
         verticalRotation -= (yAxis * 0.1f * 0.222f) * lookSensitivity;
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
