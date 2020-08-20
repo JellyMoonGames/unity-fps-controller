@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 public enum State { Standing, Crouching, Sprinting, Sliding }
+public enum SlopeState { Flat, Up, Down }
 
 public class MovementController : MonoBehaviour
 {
@@ -17,13 +18,15 @@ public class MovementController : MonoBehaviour
     public float VerticalInput      { get; private set; }
     public float JumpAllowTimeTrack { get; private set; }
     public float JumpInputTrack     { get; private set; }
+    public float SlopeRatio         { get; private set; }
+    public SlopeState SlopeAngle    { get; private set; }
 
     public bool ObjectIsAboveHead   { get; private set; }
     public bool IsGrounded          => JumpAllowTimeTrack >= 0f;
-    public bool TryingToMove        => inputVector.x == 0f && inputVector.y == 0f ? false : true;
-    public bool TryingToSprint      => Controls.Movement.Sprint.ReadValue<float>() > 0.1f;
-    public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
     public bool InActionState       => CurrentState == State.Sliding;
+    public bool TryingToSprint      => Controls.Movement.Sprint.ReadValue<float>() > 0.1f;
+    public bool TryingToMove        => inputVector.x == 0f && inputVector.y == 0f ? false : true;
+    public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
     public bool IsMoving            => Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f;
 
     public CharacterController CC   { get; private set; }
@@ -171,6 +174,7 @@ public class MovementController : MonoBehaviour
     private void Update()
     {
         HandleInput();
+        CalculateSlopeAngles();
         UpdateJumpSystem();
         UpdateSprintSystem();
         UpdateCrouchSystem();
@@ -402,6 +406,22 @@ public class MovementController : MonoBehaviour
     {
         PreviousState = CurrentState;
         CurrentState = state;
+    }
+
+    private void CalculateSlopeAngles()
+    {
+        if(!IsGrounded) return;
+
+        Vector3 origin = transform.position; origin.y += 0.1f;
+        if(Physics.Raycast(origin, -transform.up, out var hit, CC.skinWidth + 0.5f, ~LayerMask.GetMask("Player")))
+        {
+            SlopeRatio = Mathf.Acos(Mathf.Clamp(hit.normal.y, -1f, 1f));
+            float slopeDirectionValue = Vector3.Angle(hit.normal, transform.forward);
+            
+            if (slopeDirectionValue >= 88 && slopeDirectionValue <= 92) SlopeAngle = SlopeState.Flat;
+            else if(slopeDirectionValue < 88)                           SlopeAngle = SlopeState.Down;
+            else if(slopeDirectionValue > 92)                           SlopeAngle = SlopeState.Up;
+        }
     }
     
     private void OnControllerColliderHit(ControllerColliderHit hit)
