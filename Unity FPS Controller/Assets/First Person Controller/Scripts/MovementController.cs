@@ -21,13 +21,13 @@ public class MovementController : MonoBehaviour
     public float SlopeRatio         { get; private set; }
     public SlopeState SlopeAngle    { get; private set; }
 
-    public bool ObjectIsAboveHead   { get; private set; }
-    public bool IsGrounded          => JumpAllowTimeTrack >= 0f;
-    public bool InActionState       => CurrentState == State.Sliding;
-    public bool TryingToSprint      => Controls.Movement.Sprint.ReadValue<float>() > 0.1f;
-    public bool TryingToMove        => inputVector.x == 0f && inputVector.y == 0f ? false : true;
-    public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
     public bool IsMoving            => Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f;
+    public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
+    public bool TryingToMove        => inputVector.x == 0f && inputVector.y == 0f ? false : true;
+    public bool TryingToSprint      => Controls.Movement.Sprint.ReadValue<float>() > 0.1f;
+    public bool InActionState       => CurrentState == State.Sliding;
+    public bool IsGrounded          => JumpAllowTimeTrack >= 0f;
+    public bool ObjectIsAboveHead   { get; private set; }
 
     public CharacterController CC   { get; private set; }
     public PlayerControls Controls  { get; private set; }
@@ -212,7 +212,7 @@ public class MovementController : MonoBehaviour
         // If the player can jump, initiate it.
         if(maxAmountOfJumps > 0 && JumpInputTrack <= 0f)
         {
-            if(IsGrounded || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
+            if(IsGrounded && SlopeRatio < 0.7854 || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
             {
                 initiateJump = true;
             }
@@ -317,7 +317,7 @@ public class MovementController : MonoBehaviour
         if(initiateSlide)
         {
             // Is Sliding
-            if(IsMoving && currentSlideTimer > 0 && IsValidForwardInput)
+            if(IsMoving && currentSlideTimer > 0 && IsValidForwardInput && SlopeAngle != SlopeState.Up)
             {
                 currentSlideTimer -= Time.deltaTime;
                 if(CurrentState != State.Sliding) SetState(State.Sliding);
