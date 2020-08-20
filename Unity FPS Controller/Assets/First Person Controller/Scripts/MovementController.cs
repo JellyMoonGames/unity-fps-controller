@@ -66,6 +66,7 @@ public class MovementController : MonoBehaviour
 
     [Header("Slide Settings")]
     [SerializeField] private float slideDuration = 2f;
+    [SerializeField] private float slideSpeedThreshold = 5f;
 
     [Header("Physics Interaction")]
     [SerializeField] private float crouchPushPower = 1f;
@@ -181,6 +182,8 @@ public class MovementController : MonoBehaviour
         UpdateSlideSystem();
         UpdateMovementSpeed();
 
+        Debug.Log(movementVector);
+
         // Apply The Movement to the 'CharacterController'.
         CC.Move(movementVector * Time.deltaTime);
     }
@@ -231,7 +234,7 @@ public class MovementController : MonoBehaviour
         }
 
         // Slide
-        else if(canSlide && CurrentState == State.Sprinting && IsGrounded && JumpInputTrack <= 0f)
+        else if(canSlide && CurrentState == State.Sprinting && VerticalSpeed >= slideSpeedThreshold && IsGrounded && JumpInputTrack <= 0f)
         {
             initiateSlide = true;
             OnCrouch?.Invoke();
