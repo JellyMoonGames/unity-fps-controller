@@ -9,17 +9,17 @@ public class MovementController : MonoBehaviour
 {
     #region Public Properties
 
-    public State CurrentState       { get; private set; }
-    public State PreviousState      { get; private set; }
+    public State CurrentState           { get; private set; }
+    public State PreviousState          { get; private set; }
 
-    public float HorizontalSpeed    { get; private set; }
-    public float VerticalSpeed      { get; private set; }
-    public float HorizontalInput    { get; private set; }
-    public float VerticalInput      { get; private set; }
-    public float JumpAllowTimeTrack { get; private set; }
-    public float JumpInputTrack     { get; private set; }
-    public float SlopeRatio         { get; private set; }
-    public SlopeState SlopeAngle    { get; private set; }
+    public float HorizontalSpeed        { get; private set; }
+    public float VerticalSpeed          { get; private set; }
+    public float HorizontalInput        { get; private set; }
+    public float VerticalInput          { get; private set; }
+    public float JumpAllowTimeTrack     { get; private set; }
+    public float JumpInputTrack         { get; private set; }
+    public float SlopeAngle             { get; private set; }
+    public SlopeState SlopeDirection    { get; private set; }
 
     public bool IsMoving            => Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f;
     public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
@@ -182,7 +182,7 @@ public class MovementController : MonoBehaviour
         UpdateSlideSystem();
         UpdateMovementSpeed();
 
-        Debug.Log(movementVector);
+        //Debug.Log(movementVector);
 
         // Apply The Movement to the 'CharacterController'.
         CC.Move(movementVector * Time.deltaTime);
@@ -215,7 +215,7 @@ public class MovementController : MonoBehaviour
         // If the player can jump, initiate it.
         if(maxAmountOfJumps > 0 && JumpInputTrack <= 0f)
         {
-            if(IsGrounded && SlopeRatio < 0.7854 || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
+            if(IsGrounded && SlopeAngle <= CC.slopeLimit || IsGrounded == false && currentAmountOfJumps < maxAmountOfJumps && canAirJump)
             {
                 initiateJump = true;
             }
@@ -320,7 +320,7 @@ public class MovementController : MonoBehaviour
         if(initiateSlide)
         {
             // Is Sliding
-            if(IsMoving && currentSlideTimer > 0 && IsValidForwardInput && SlopeAngle != SlopeState.Up)
+            if(IsMoving && currentSlideTimer > 0 && IsValidForwardInput && SlopeDirection != SlopeState.Up)
             {
                 currentSlideTimer -= Time.deltaTime;
                 if(CurrentState != State.Sliding) SetState(State.Sliding);
@@ -418,12 +418,12 @@ public class MovementController : MonoBehaviour
         Vector3 origin = transform.position; origin.y += 0.1f;
         if(Physics.Raycast(origin, -transform.up, out var hit, CC.skinWidth + 0.5f, ~LayerMask.GetMask("Player")))
         {
-            SlopeRatio = Mathf.Acos(Mathf.Clamp(hit.normal.y, -1f, 1f));
+            SlopeAngle = Vector3.Angle(Vector3.up, hit.normal);
             float slopeDirectionValue = Vector3.Angle(hit.normal, transform.forward);
             
-            if (slopeDirectionValue >= 88 && slopeDirectionValue <= 92) SlopeAngle = SlopeState.Flat;
-            else if(slopeDirectionValue < 88)                           SlopeAngle = SlopeState.Down;
-            else if(slopeDirectionValue > 92)                           SlopeAngle = SlopeState.Up;
+            if (slopeDirectionValue >= 88 && slopeDirectionValue <= 92) SlopeDirection = SlopeState.Flat;
+            else if(slopeDirectionValue < 88)                           SlopeDirection = SlopeState.Down;
+            else if(slopeDirectionValue > 92)                           SlopeDirection = SlopeState.Up;
         }
     }
     
