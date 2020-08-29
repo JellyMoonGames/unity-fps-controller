@@ -21,6 +21,7 @@ public class MovementController : MonoBehaviour
     public float SlopeAngle             { get; private set; }
     public SlopeState SlopeDirection    { get; private set; }
 
+    public bool IsOnSlope           => SlopeAngle > 5f;
     public bool IsMoving            => Mathf.Abs(CC.velocity.x) >= 0.015f || Mathf.Abs(CC.velocity.y) >= 0.015f || Mathf.Abs(CC.velocity.z) >= 0.015f;
     public bool IsValidForwardInput => VerticalInput > 0.1f && (HorizontalInput <= 0.3f && HorizontalInput >= -0.3f);
     public bool TryingToMove        => inputVector.x == 0f && inputVector.y == 0f ? false : true;
@@ -53,10 +54,10 @@ public class MovementController : MonoBehaviour
     [SerializeField] private float movementTransitionSpeed = 3f;
     [SerializeField] private float groundSmoothAmount = 0.1f;
     [SerializeField] private float airSmoothAmount = 0.5f;
+    [SerializeField] private float gravity = 18f;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpSpeed = 15f;
-    [SerializeField] private float gravity = 18f;
     [SerializeField] private int maxAmountOfJumps = 1;
     [SerializeField] private bool canAirJump = false;
 
@@ -94,6 +95,13 @@ public class MovementController : MonoBehaviour
     private float horizontalInputVelocity = 0f;
     private float verticalInputVelocity = 0f;
 
+    // Movement Variables
+    private float targetHorizontalSpeed = 0f;
+    private float targetVerticalSpeed = 0f;
+    private bool initiateSprint = false;
+    private bool wasGrounded = false;
+    private bool runOnceGrounded = false;
+
     // Jump Variables
     private int currentAmountOfJumps = 0;
     private float verticalVelocity = 0f;
@@ -111,13 +119,6 @@ public class MovementController : MonoBehaviour
     // Slide Variables
     private float currentSlideTimer = 0f;
     private bool initiateSlide = false;
-
-    // Speed Variables
-    private float targetHorizontalSpeed = 0f;
-    private float targetVerticalSpeed = 0f;
-
-    // Sprint Variables
-    private bool initiateSprint = false;
     
     // Component References
     private Rigidbody hitRigidbody;
@@ -128,6 +129,9 @@ public class MovementController : MonoBehaviour
 
     public event Action OnJump;
     public event Action OnCrouch;
+    public event Action OnSlide;
+    public event Action OnSprint;
+    public event Action OnLand;
     public event Action OnHitPhysicsObject;
     
     #endregion
@@ -182,8 +186,6 @@ public class MovementController : MonoBehaviour
         UpdateSlideSystem();
         UpdateMovementSpeed();
 
-        //Debug.Log(movementVector);
-
         // Apply The Movement to the 'CharacterController'.
         CC.Move(movementVector * Time.deltaTime);
     }
@@ -237,7 +239,7 @@ public class MovementController : MonoBehaviour
         else if(canSlide && CurrentState == State.Sprinting && VerticalSpeed >= slideSpeedThreshold && IsGrounded && JumpInputTrack <= 0f)
         {
             initiateSlide = true;
-            OnCrouch?.Invoke();
+            OnSlide?.Invoke();
         }
 
         // Cancel Sliding
@@ -266,11 +268,14 @@ public class MovementController : MonoBehaviour
         if(IsMoving && IsGrounded && IsValidForwardInput && !InActionState && JumpInputTrack <= 0f)
         {
             initiateSprint = true;
+            OnSprint?.Invoke();
         }
     }
 
     private void UpdateJumpSystem()
-    {
+    {        
+        wasGrounded = IsGrounded;
+
         if(CC.isGrounded)
         {
             inputSmoothAmount = groundSmoothAmount;
@@ -286,11 +291,16 @@ public class MovementController : MonoBehaviour
             waitToLandTrack = 0.1f;
             verticalVelocity -= gravity * Time.deltaTime;
         }
-
-        JumpInputTrack -= Time.deltaTime;
         
-        if(waitToLandTrack <= 0f) verticalVelocity = 0f;
-        if(maxAmountOfJumps <= 0) maxAmountOfJumps = 0;
+        JumpInputTrack -= Time.deltaTime;
+
+        // OnLand Event
+        if(!wasGrounded && wasGrounded != IsGrounded)
+        {
+            OnLand?.Invoke();
+            verticalVelocity = -1f;
+            wasGrounded = IsGrounded;
+        }
 
         if(initiateJump)
         {
@@ -357,6 +367,7 @@ public class MovementController : MonoBehaviour
 
     private void UpdateMovementSpeed()
     {
+        // Set movement Speeds for the different states
         switch(CurrentState)
         {
             case State.Standing:
@@ -387,7 +398,6 @@ public class MovementController : MonoBehaviour
                 break;
             }
         }
-
 
         HorizontalSpeed = Mathf.Lerp(HorizontalSpeed, targetHorizontalSpeed, movementTransitionSpeed * Time.deltaTime);
         VerticalSpeed = Mathf.Lerp(VerticalSpeed, targetVerticalSpeed, movementTransitionSpeed * Time.deltaTime);
@@ -424,6 +434,10 @@ public class MovementController : MonoBehaviour
             if (slopeDirectionValue >= 88 && slopeDirectionValue <= 92) SlopeDirection = SlopeState.Flat;
             else if(slopeDirectionValue < 88)                           SlopeDirection = SlopeState.Down;
             else if(slopeDirectionValue > 92)                           SlopeDirection = SlopeState.Up;
+        }
+        else
+        {
+            SlopeAngle = 0f;
         }
     }
     
