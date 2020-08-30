@@ -292,6 +292,7 @@ public class MovementController : MonoBehaviour
             verticalVelocity -= gravity * Time.deltaTime;
         }
         
+        if(waitToLandTrack <= 0f) verticalVelocity = -1f;
         JumpInputTrack -= Time.deltaTime;
 
         // OnLand Event
