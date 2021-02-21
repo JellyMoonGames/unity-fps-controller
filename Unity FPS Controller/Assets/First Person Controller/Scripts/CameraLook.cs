@@ -132,7 +132,7 @@ public class CameraLook : MonoBehaviour
     {
         if(!canHeadbob) return;
         
-        if(controller.TryingToMove && controller.IsMoving && controller.JumpAllowTimeTrack >= 0.1f && controller.CurrentState != State.Sliding)
+        if(controller.TryingToMove && controller.IsMoving && controller.IsGrounded && !controller.InActionState)
         {
             bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * normalHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
             * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
@@ -215,7 +215,7 @@ public class CameraLook : MonoBehaviour
     {
         if(!canLean) return;
         
-        if(controller.IsGrounded && controller.CurrentState != State.Sprinting && controller.JumpInputTrack <= 0f)
+        if(controller.IsGrounded && controller.CurrentState != State.Sprinting && controller.IsGrounded)
         {
             if(controls.Movement.LeanLeft.ReadValue<float>() > 0)
             {

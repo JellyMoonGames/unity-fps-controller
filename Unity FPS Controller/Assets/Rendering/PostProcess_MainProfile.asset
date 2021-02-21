@@ -40,6 +40,11 @@ MonoBehaviour:
   highQualityFiltering:
     m_OverrideState: 0
     m_Value: 0
+  skipIterations:
+    m_OverrideState: 0
+    m_Value: 1
+    min: 0
+    max: 16
   dirtTexture:
     m_OverrideState: 0
     m_Value: {fileID: 0}
@@ -59,7 +64,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccf1aba9553839d41ae37dd52e9ebcce, type: 3}
   m_Name: MotionBlur
   m_EditorClassIdentifier: 
-  active: 1
+  active: 0
   m_AdvancedMode: 0
   mode:
     m_OverrideState: 0
@@ -146,10 +151,10 @@ MonoBehaviour:
   m_AdvancedMode: 0
   postExposure:
     m_OverrideState: 1
-    m_Value: 0.5
+    m_Value: 0.6
   contrast:
     m_OverrideState: 1
-    m_Value: 10
+    m_Value: 25
     min: -100
     max: 100
   colorFilter:
@@ -165,7 +170,7 @@ MonoBehaviour:
     max: 180
   saturation:
     m_OverrideState: 1
-    m_Value: 5
+    m_Value: 15
     min: -100
     max: 100
 --- !u!114 &11400000
@@ -186,8 +191,7 @@ MonoBehaviour:
   - {fileID: -5941145369291412611}
   - {fileID: -1212520930820039103}
   - {fileID: -8574192643517934824}
-  - {fileID: 6205376641856745646}
---- !u!114 &6205376641856745646
+--- !u!114 &3094429326993310120
 MonoBehaviour:
   m_ObjectHideFlags: 3
   m_CorrespondingSourceObject: {fileID: 0}
@@ -196,13 +200,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81180773991d8724ab7f2d216912b564, type: 3}
-  m_Name: ChromaticAberration
+  m_Script: {fileID: 11500000, guid: 29fa0085f50d5e54f8144f766051a691, type: 3}
+  m_Name: FilmGrain
   m_EditorClassIdentifier: 
   active: 1
   m_AdvancedMode: 0
+  type:
+    m_OverrideState: 0
+    m_Value: 0
   intensity:
-    m_OverrideState: 1
-    m_Value: 0.055
+    m_OverrideState: 0
+    m_Value: 0
     min: 0
     max: 1
+  response:
+    m_OverrideState: 0
+    m_Value: 0.8
+    min: 0
+    max: 1
+  texture:
+    m_OverrideState: 0
+    m_Value: {fileID: 0}

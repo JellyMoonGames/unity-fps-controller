@@ -220,16 +220,23 @@ MonoBehaviour:
   backwardWalkSpeed: 3.5
   horizontalWalkSpeed: 3.5
   forwardSprintSpeed: 6
-  movementTransitionSpeed: 5
+  movementTransitionSpeed: 4
   groundSmoothAmount: 0.1
   airSmoothAmount: 0.5
-  jumpSpeed: 7
   gravity: 18
+  jumpSpeed: 7
   maxAmountOfJumps: 1
   canAirJump: 0
+  groundCheckOriginOffsets:
+  - {x: 0, y: 0.5, z: 0}
+  - {x: 0.5, y: 0.5, z: 0}
+  - {x: -0.5, y: 0.5, z: 0}
+  - {x: 0, y: 0.5, z: 0.5}
+  - {x: 0, y: 0.5, z: -0.5}
   crouchHeight: 1.1
   crouchSpeed: 20
   slideDuration: 1.5
+  slideSpeedThreshold: 5
   crouchPushPower: 1
   normalPushPower: 2
   sprintPushPower: 3
