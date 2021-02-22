@@ -218,7 +218,7 @@ public class MovementController : MonoBehaviour
         }
 
         // If the player tries to jump whilst sliding, cancel the slide and set state to 'Standing'.
-        if(CurrentState == State.Sliding && IsGrounded)
+        if(CurrentState == State.Sliding && (IsGrounded || jumpAllowTimeTrack >= 0f))
         {
             StopSlide(State.Standing);
         }
@@ -341,7 +341,6 @@ public class MovementController : MonoBehaviour
             // Finished Sliding
             else
             {
-                continousSlide = false;
                 StopSlide(State.Crouching);
             }
         }
@@ -491,6 +490,7 @@ public class MovementController : MonoBehaviour
 
         SetState(transitionState);
         currentSlideTimer = slideDuration;
+        continousSlide = false;
         initiateSlide = false;
     }
     
