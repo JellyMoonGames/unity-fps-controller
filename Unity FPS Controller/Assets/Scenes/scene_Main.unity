@@ -5296,6 +5296,16 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 5332724029053497746, guid: 61556c1308039df4dac5f7de89e9f57a,
         type: 3}
+      propertyPath: canAirJump
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5332724029053497746, guid: 61556c1308039df4dac5f7de89e9f57a,
+        type: 3}
+      propertyPath: maxAmountOfJumps
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5332724029053497746, guid: 61556c1308039df4dac5f7de89e9f57a,
+        type: 3}
       propertyPath: groundCheckOriginOffsets.Array.size
       value: 9
       objectReference: {fileID: 0}

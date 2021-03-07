@@ -17,6 +17,7 @@ public class MovementController : MonoBehaviour
     public float HorizontalInput        { get; private set; }
     public float VerticalInput          { get; private set; }
     public float SlopeAngle             { get; private set; }
+    public Vector3 ForwardDirection     { get; private set; }
     public SlopeState SlopeDirection    { get; private set; }
 
     public bool IsOnSlope               => SlopeAngle > 5f;
@@ -178,6 +179,7 @@ public class MovementController : MonoBehaviour
         initialCenter = cc.center;
         ObjectIsAboveHead = false;
 
+        ForwardDirection = transform.forward;
         currentSlideTimer = slideDuration;
 
         RaycastGroundCheck();
@@ -224,7 +226,7 @@ public class MovementController : MonoBehaviour
         }
 
         // If the player can jump, initiate it.
-        if(maxAmountOfJumps > 0 && (IsGrounded || jumpAllowTimeTrack >= 0f))
+        if(maxAmountOfJumps > 0 && (IsGrounded || jumpAllowTimeTrack >= 0f || canAirJump))
         {   
             if((IsGrounded && SlopeAngle <= cc.slopeLimit) || (!IsGrounded && currentAmountOfJumps < maxAmountOfJumps && (canAirJump || jumpAllowTimeTrack >= 0f)))
             {
@@ -249,6 +251,7 @@ public class MovementController : MonoBehaviour
         else if(canSlide && CurrentState == State.Sprinting && VerticalSpeed >= slideSpeedThreshold && IsGrounded && SlopeDirection != SlopeState.Up)
         {
             initiateSlide = true;
+            ForwardDirection = transform.forward;
             OnSlide?.Invoke();
         }
 
@@ -408,9 +411,10 @@ public class MovementController : MonoBehaviour
 
         HorizontalSpeed = Mathf.MoveTowards(HorizontalSpeed, targetHorizontalSpeed, movementTransitionSpeed * Time.deltaTime);
         VerticalSpeed = Mathf.MoveTowards(VerticalSpeed, targetVerticalSpeed, movementTransitionSpeed * Time.deltaTime);
-        
         movementVector = new Vector3(HorizontalInput * HorizontalSpeed, verticalVelocity, VerticalInput * VerticalSpeed);
-        movementVector = transform.rotation * movementVector;
+        
+        if(!InActionState) ForwardDirection = transform.forward;
+        movementVector = Quaternion.LookRotation(ForwardDirection, transform.up) * movementVector;
     }
 
     private void CalculateSlopeAngles()
@@ -434,7 +438,7 @@ public class MovementController : MonoBehaviour
             if(Physics.Raycast(transform.position + groundCheckOriginOffsets[i], -transform.up, out var hit, 0.75f, ~LayerMask.GetMask("Player")))
             {
                 SlopeAngle = Vector3.Angle(transform.up, hit.normal);
-                float slopeDirectionValue = Vector3.Angle(hit.normal, transform.forward);
+                float slopeDirectionValue = Vector3.Angle(hit.normal, ForwardDirection);
 
                 if (slopeDirectionValue >= 88 && slopeDirectionValue <= 92) SlopeDirection = SlopeState.Flat;
                 else if(slopeDirectionValue < 88)                           SlopeDirection = SlopeState.Down;
