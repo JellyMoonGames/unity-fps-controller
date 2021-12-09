@@ -1,5 +1,5 @@
 # Unity FPS Controller
-A custom-built first-person controller for use in Unity with a high-level of customisation and tuning possible. This controller works with Unity's new input system and so will not work using the input manager.
+A custom-built first-person controller for use in Unity with a high-level of customisation and tuning possible. This controller uses Unity's new input system and so will not work using the old input manager.
 
 Some of the features include:
 - Sprinting
