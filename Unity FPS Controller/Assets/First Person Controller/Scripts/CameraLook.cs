@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class CameraLook : MonoBehaviour
 {
@@ -32,7 +31,7 @@ public class CameraLook : MonoBehaviour
     [Header("Crouch Bob Amount")]
     [SerializeField] private float crouchXBobAmount = 0.1f;
     [SerializeField] private float crouchYBobAmount = 0.2f;
-    
+
     [Header("Normal Bob Amount")]
     [SerializeField] private float normalXBobAmount = 0.25f;
     [SerializeField] private float normalYBobAmount = 0.3f;
@@ -40,7 +39,7 @@ public class CameraLook : MonoBehaviour
     [Header("Sprint Bob Amount")]
     [SerializeField] private float sprintXBobAmount = 0.3f;
     [SerializeField] private float sprintYBobAmount = 0.35f;
-    
+
     [Header("References")]
     [SerializeField] private Transform playerObject;
     [SerializeField] private Transform leanObject;
@@ -76,7 +75,7 @@ public class CameraLook : MonoBehaviour
     private Vector3 headbobRestPosition = Vector3.zero;
     private Vector3 headbobObjectPosition = Vector3.zero;
     private bool isCycleFinished = false;
-    
+
     //Component References
     private MovementController controller;
     private PlayerControls controls;
@@ -102,7 +101,7 @@ public class CameraLook : MonoBehaviour
     private void Start()
     {
         #region Initialise Variables
-        
+
         initialPosition = leanObject.localPosition;
         targetPosition = Vector3.zero;
         initialRotation = leanObject.localRotation;
@@ -112,7 +111,7 @@ public class CameraLook : MonoBehaviour
         headbobRestPosition = headbobObject.localPosition;
         headbobObjectPosition = headbobObject.localPosition;
         isCycleFinished = false;
-        
+
         #endregion
     }
 
@@ -130,9 +129,9 @@ public class CameraLook : MonoBehaviour
 
     private void Headbob()
     {
-        if(!canHeadbob) return;
-        
-        if(controller.TryingToMove && controller.IsMoving && controller.IsGrounded && !controller.InActionState)
+        if (!canHeadbob) return;
+
+        if (controller.TryingToMove && controller.IsMoving && controller.IsGrounded && !controller.InActionState)
         {
             bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * normalHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
             * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
@@ -140,7 +139,7 @@ public class CameraLook : MonoBehaviour
             xBobAmount = normalXBobAmount;
             yBobAmount = normalYBobAmount;
 
-            if(controller.CurrentState == State.Crouching)
+            if (controller.CurrentState == State.Crouching)
             {
                 bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
                 * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
@@ -149,20 +148,20 @@ public class CameraLook : MonoBehaviour
                 yBobAmount = crouchYBobAmount;
             }
 
-            if(controller.ObjectIsAboveHead)
+            if (controller.ObjectIsAboveHead)
             {
                 bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * crouchHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
                 * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
 
                 xBobAmount = crouchXBobAmount;
 
-                if(normalYBobAmount == 0f && crouchYBobAmount == 0f && sprintYBobAmount == 0f)
+                if (normalYBobAmount == 0f && crouchYBobAmount == 0f && sprintYBobAmount == 0f)
                     yBobAmount = 0f;
                 else
                     yBobAmount = 0.05f;
             }
 
-            if(controller.CurrentState == State.Sprinting)
+            if (controller.CurrentState == State.Sprinting)
             {
                 bobSpeed = Mathf.Abs((((controller.HorizontalSpeed + controller.VerticalSpeed) / 2f) * sprintHeadbobSpeedMultiplier * generalHeadbobSpeedMultiplier)
                 * Mathf.Clamp((Mathf.Abs(controller.HorizontalInput) + Mathf.Abs(controller.VerticalInput)), 0f, 1f));
@@ -195,16 +194,16 @@ public class CameraLook : MonoBehaviour
         }
 
         //Reset Timer
-        if(timer > Mathf.PI * 2f) timer = 0f;
+        if (timer > Mathf.PI * 2f) timer = 0f;
 
         //Footstep Sounds
-        if(timer == 0f)
+        if (timer == 0f)
         {
             isCycleFinished = true;
             OnFootstepRight?.Invoke();
 
         }
-        else if(isCycleFinished && timer >= Mathf.PI - 0.1f && timer <= Mathf.PI + 0.1f)
+        else if (isCycleFinished && timer >= Mathf.PI - 0.1f && timer <= Mathf.PI + 0.1f)
         {
             isCycleFinished = false;
             OnFootstepLeft?.Invoke();
@@ -213,19 +212,19 @@ public class CameraLook : MonoBehaviour
 
     private void Leaning()
     {
-        if(!canLean) return;
-        
-        if(controller.IsGrounded && controller.CurrentState != State.Sprinting && controller.IsGrounded)
+        if (!canLean) return;
+
+        if (controller.IsGrounded && controller.CurrentState != State.Sprinting && controller.IsGrounded)
         {
-            if(controls.Movement.LeanLeft.ReadValue<float>() > 0)
+            if (controls.Movement.LeanLeft.ReadValue<float>() > 0)
             {
                 targetPosition = new Vector3(-leanMovementAmount, initialPosition.y, initialPosition.z);
                 targetRotation = Quaternion.Euler(0f, 0f, leanRotationAmount);
                 IsLeaning = true;
                 OnLean?.Invoke();
             }
-            
-            else if(controls.Movement.LeanRight.ReadValue<float>() > 0)
+
+            else if (controls.Movement.LeanRight.ReadValue<float>() > 0)
             {
                 targetPosition = new Vector3(leanMovementAmount, initialPosition.y, initialPosition.z);
                 targetRotation = Quaternion.Euler(0f, 0f, -leanRotationAmount);
@@ -233,7 +232,7 @@ public class CameraLook : MonoBehaviour
                 OnLean?.Invoke();
             }
 
-            else if(controls.Movement.LeanLeft.ReadValue<float>() == 0 && controls.Movement.LeanRight.ReadValue<float>() == 0)
+            else if (controls.Movement.LeanLeft.ReadValue<float>() == 0 && controls.Movement.LeanRight.ReadValue<float>() == 0)
             {
                 targetPosition = initialPosition;
                 targetRotation = initialRotation;
@@ -252,7 +251,7 @@ public class CameraLook : MonoBehaviour
     {
         xAxis = Mathf.SmoothDamp(xAxis, inputVector.x, ref xAxisVelocity, smoothAmount);
         yAxis = Mathf.SmoothDamp(yAxis, inputVector.y, ref yAxisVelocity, smoothAmount);
-        
+
         verticalRotation -= (yAxis * 0.1f * 0.222f) * lookSensitivity;
         verticalRotation = Mathf.Clamp(verticalRotation, -upDownRange, upDownRange);
     }
@@ -262,13 +261,13 @@ public class CameraLook : MonoBehaviour
         playerObject.Rotate(0f, (xAxis * 0.1f * 0.222f) * lookSensitivity, 0f);
         transform.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
 
-        if(canLean)
+        if (canLean)
         {
             leanObject.localPosition = Vector3.Lerp(leanObject.localPosition, targetPosition, leanSpeed * Time.deltaTime);
             leanObject.localRotation = Quaternion.Lerp(leanObject.localRotation, targetRotation, leanSpeed * Time.deltaTime);
         }
 
-        if(canHeadbob) headbobObject.localPosition = Vector3.Lerp(headbobObject.localPosition, headbobObjectPosition, 5f * Time.deltaTime);
+        if (canHeadbob) headbobObject.localPosition = Vector3.Lerp(headbobObject.localPosition, headbobObjectPosition, 5f * Time.deltaTime);
     }
 
     private void OnEnable() => controls.Enable();
